@@ -1,0 +1,7 @@
+[package]
+name = "utad"
+version = "0.1.0"
+entrypoint = "lib.typ"
+authors = ["itzi97"]
+license = "MIT"
+description = "U-tad report, assignment and problem-set templates (LaTeX + Typst)."

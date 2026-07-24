@@ -1,0 +1,90 @@
+name: build examples
+
+# Compiles every worked example AND every copy-to-start skeleton on each
+# push / PR, so any change that breaks a template (or the starter a student
+# would actually copy) fails CI. Both jobs install the required fonts
+# (Poppins + Carlito) first, then build and upload the PDFs as artifacts.
+#
+# If this badge is green, a student can clone the repo and expect every
+# template and starter to compile as-is.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# A newer push cancels an in-progress run on the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typst:
+    name: Typst (examples + starters)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install fonts (Poppins + Carlito)
+        run: bash scripts/install-fonts.sh
+
+      - name: Install Typst
+        uses: typst-community/setup-typst@v4
+        with:
+          typst-version: "0.15.1"
+
+      - name: Compile every Typst example and starter
+        working-directory: typst
+        run: |
+          set -e
+          FONTS="$HOME/.local/share/fonts"
+          # Worked examples + the copy-to-start skeletons a student copies.
+          FILES="example assignment spark-solution slides business-plan \
+                 starter-report starter-assignment starter-slides"
+          for f in $FILES; do
+            echo "== compiling $f.typ =="
+            typst compile --font-path "$FONTS" "$f.typ"
+            test -f "$f.pdf" || { echo "::error::$f.pdf was not produced"; exit 1; }
+          done
+          echo "All Typst templates compiled."
+
+      - name: Upload Typst PDFs
+        uses: actions/upload-artifact@v4
+        with:
+          name: typst-pdfs
+          path: typst/*.pdf
+
+  latex:
+    name: LaTeX (example + starter)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install TeX Live (XeLaTeX + required packages)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            texlive-xetex texlive-latex-recommended texlive-latex-extra \
+            texlive-fonts-recommended texlive-science texlive-pictures \
+            fontconfig
+
+      - name: Install fonts (Poppins + Carlito)
+        run: bash scripts/install-fonts.sh
+
+      - name: Compile LaTeX example and starter (twice, for the ToC)
+        working-directory: latex
+        run: |
+          set -e
+          for f in example starter; do
+            echo "== compiling $f.tex =="
+            xelatex -interaction=nonstopmode -halt-on-error "$f.tex" >/dev/null
+            xelatex -interaction=nonstopmode -halt-on-error "$f.tex" >/dev/null
+            test -f "$f.pdf" || { echo "::error::$f.pdf was not produced"; exit 1; }
+          done
+          echo "All LaTeX templates compiled."
+
+      - name: Upload LaTeX PDFs
+        uses: actions/upload-artifact@v4
+        with:
+          name: latex-pdfs
+          path: latex/*.pdf

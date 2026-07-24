@@ -1,0 +1,277 @@
+% ============================================================
+%  Machine Learning Project Report -- LaTeX edition, worked example
+%  A FICTIONAL, generic sample used to exercise every template
+%  feature. It is not a real submission and describes no real
+%  person or organisation -- swap in your own content. Mirrors
+%  example.typ so the two templates can be compared side by side.
+%  Compile with: xelatex example.tex (run twice).
+%
+%  Every helper used below is documented -- LaTeX and Typst side by
+%  side -- in docs/GUIDE.md under "Component reference".
+% ============================================================
+\documentclass[11pt,a4paper]{report}
+\usepackage{utad}
+
+\renewcommand{\utadTitle}{Image Classification with CNNs}
+\renewcommand{\utadSubtitle}{Machine Learning Project}
+\renewcommand{\utadDegree}{B.S. in Software Engineering, Minor in Data Science \& AI}
+\renewcommand{\utadSubject}{Machine Learning}
+\renewcommand{\utadYear}{4}
+\renewcommand{\utadTeacher}{Teacher Name}
+\renewcommand{\utadDate}{May 2026}
+\setutadrunningtitle{ML Project Report}
+\setutadauthor{Your Name}
+
+\begin{document}
+\utadtitlepage
+\utadcontents
+
+\chapter{Abstract}
+\begin{utadnote}[Summary]
+A convolutional neural network is trained to classify the Fashion-MNIST
+dataset (28$\times$28 grayscale images, 10 clothing categories). Starting
+from a plain baseline, the model is refined across eight tracked revisions;
+the final network reaches competitive test accuracy, evaluated once on a
+held-out set.
+\end{utadnote}
+
+\chapter{Introduction}
+
+\section{Context and Motivation}
+Image classification is a canonical supervised-learning task and a natural
+vehicle for practicing the full machine-learning workflow: preparing data,
+choosing and iterating on a model, tuning it against a validation set, and
+reporting an honest estimate of generalization. This project takes
+Fashion-MNIST --- a drop-in, harder replacement for the classic
+handwritten-digit dataset --- and builds a convolutional classifier for it
+from a simple baseline upward.
+
+The task is a good fit for the degree's focus in that it combines software
+engineering (a clean, reproducible training pipeline in Python) with the
+data-science reasoning behind each modeling decision, so that every
+accuracy gain can be attributed to a specific, justified change rather than
+to undocumented trial and error.
+
+\section{Objectives}
+\begin{enumerate}
+\item \textbf{General objective:} To apply and consolidate the
+  machine-learning competencies acquired during the degree by building,
+  training, and evaluating an image classifier end to end.
+\item Iteratively refine a convolutional model, replacing a naive baseline
+  with a tuned network whose every change is measured against a fixed
+  validation split.
+\item Apply sound evaluation practice --- a single, final test-set
+  measurement --- so the reported accuracy is an unbiased estimate of
+  generalization.
+\item Document the modeling decisions and their measured effect clearly
+  enough that the experiment is reproducible.
+\end{enumerate}
+
+\section{Report Structure}
+This report is organized as follows: Chapter 3 describes the dataset, the
+pipeline architecture, and the tools used. Chapter 4 details the modeling
+work, organized by workstream. Appendix A provides a week-by-week
+development log.
+
+\chapter{Dataset and Approach}
+
+\section{Dataset}
+Fashion-MNIST consists of 70{,}000 grayscale images (60{,}000 train,
+10{,}000 test) at 28$\times$28 resolution, in ten balanced classes
+(t-shirt, trouser, pullover, dress, coat, sandal, shirt, sneaker, bag,
+ankle boot). A fixed 10\% slice of the training set is held out as a
+validation split; the official test set is reserved for a single final
+measurement.
+
+\section{Pipeline Architecture}
+The classifier is organized as a small pipeline: preprocessing, a
+convolutional feature extractor, and a dense classifier head. The
+convolutional feature extractor (highlighted) was the focus of the
+iteration work described in Chapter 4.
+
+\begin{figure}[h]
+\centering
+\begin{utadorgchart}
+\node[orgroot]{Classification Pipeline}
+  child { node[orgnode]{Preprocessing}
+    child { node[orgnode]{Normalize / augment} } }
+  child { node[orgnode]{CNN Model}
+    child { node[orghi]{Conv feature extractor} }
+    child { node[orgnode]{Classifier head} } }
+  child { node[orgnode]{Evaluation} };
+\end{utadorgchart}
+\caption{Architecture of the classification pipeline.}
+\end{figure}
+
+\section{Tools and Libraries}
+{\utadtable
+\begin{tabularx}{\textwidth}{@{}p{4cm}X@{}}
+\tblheadrow \tblhead{Category} & \tblhead{Tools / Libraries} \\
+Language & Python 3.11 \\
+Modeling & PyTorch, torchvision \\
+Numerics & NumPy \\
+Plotting & Matplotlib \\
+Experiment Tracking & Weights \& Biases (logging only) \\
+Environment & Jupyter, Conda \\
+Version Control & Git, GitLab (feature-branch workflow) \\
+\end{tabularx}}
+
+\chapter{Experiments}
+
+The workstreams below are presented topically rather than strictly in
+calendar order; data preparation and early modeling genuinely overlapped in
+time.
+
+\begin{utadtimeline}{31}
+\ganttbar[name=model]{Model Development (v1--v8)}{1}{15} \\
+\ganttbar{Validation Sweeps}{13}{15} \\
+\ganttmilestone{Final Test Eval}{14} \\
+\ganttbar{Data Augmentation Study (v1--v5)}{12}{20} \\
+\ganttbar{Self-Directed Upskilling}{13}{31} \\
+\ganttbar[name=infer]{Inference Pipeline Setup}{20}{20} \\
+\ganttbar[name=deploy, bar/.append style={fill=utadgrey!35, draw=utadgrey!60}]
+  {Deployment Demo (planned)}{21}{31} \\
+% Finish-to-start dependency arrows between named bars
+\ganttlink{model}{infer}
+\ganttlink{infer}{deploy}
+\end{utadtimeline}
+
+\section{Model Development}
+
+\subsection{Objective}
+Develop a convolutional classifier that generalizes well to unseen
+Fashion-MNIST images, improving on a naive baseline through a sequence of
+individually-measured changes, each validated on the fixed validation split
+before being kept.
+
+\subsection{Model Evolution (v1 -- v8)}
+\begin{utadchain}
+\utadchainbox{start}{v1}{Baseline MLP}
+\utadchainbox{mid}{v2}{Simple CNN}
+\utadchainbox{mid}{v3}{Normalization}
+\utadchainbox{mid}{v4}{Deeper net}
+\utadchainbox{mid}{v5}{Dropout}
+\utadchainbox{mid}{v6}{Augmentation}
+\utadchainbox{mid}{v7}{LR schedule}
+\utadchainbox{final}{v8}{Final model}
+\end{utadchain}
+
+\begin{itemize}
+\item \textbf{v1 -- Baseline MLP.} A single fully-connected hidden layer on
+  flattened pixels, as a measured floor for everything that follows.
+\item \textbf{v2 -- Simple CNN.} Two convolution-and-pool blocks, which cut
+  the validation error sharply by exploiting spatial structure the MLP
+  ignored.
+\item \textbf{v5 -- Dropout.} Added dropout to the dense head to close the
+  train/validation gap that appeared once the network was deep enough to
+  overfit.
+\item \textbf{v8 -- Final model.} Locked architecture and hyperparameters
+  after the validation sweeps; this is the only version measured on the
+  test set.
+\end{itemize}
+
+\subsection{Technical Details}
+\begin{lstlisting}[language=Python]
+# One training epoch: forward pass, cross-entropy loss, backprop, SGD step.
+def train_epoch(model, loader, optimizer, device):
+    model.train()
+    running = 0.0
+    for images, labels in loader:
+        images, labels = images.to(device), labels.to(device)
+        optimizer.zero_grad()
+        logits = model(images)
+        loss = F.cross_entropy(logits, labels)   # softmax + NLL
+        loss.backward()
+        optimizer.step()
+        running += loss.item() * images.size(0)
+    return running / len(loader.dataset)
+\end{lstlisting}
+
+\subsection{Objective Function}
+The network outputs class scores $z_c$ that a softmax turns into a
+probability distribution over the $C = 10$ classes:
+\begin{equation}
+  p_c = \frac{e^{z_c}}{\sum_{j=1}^{C} e^{z_j}}.
+\end{equation}
+For a single labeled example with one-hot target $y$, training minimizes the
+cross-entropy between the target and the predicted distribution:
+\begin{equation}
+  \mathcal{L} = -\sum_{c=1}^{C} y_c \log p_c .
+\end{equation}
+Over a training set of $N$ examples, the optimizer minimizes the mean loss,
+taking a stochastic-gradient step with learning rate $\eta$ each iteration:
+\[
+  J(\theta) = \frac{1}{N}\sum_{i=1}^{N} \mathcal{L}_i,
+  \qquad
+  \theta \leftarrow \theta - \eta\, \nabla_\theta J(\theta).
+\]
+
+\begin{utadimportant}[Measured once, not tuned against]
+Every architecture and hyperparameter choice above was selected using the
+validation split only. The held-out test set was evaluated exactly once, on
+the final model (v8), so the reported test accuracy is an honest estimate of
+generalization rather than a number the model was tuned toward.
+\end{utadimportant}
+
+\subsection{Results}
+{\utadtable
+\begin{tabularx}{\textwidth}{@{}Xrr@{}}
+\tblheadrow \tblhead{Model} & \tblhead{Val.\ accuracy} & \tblhead{Params} \\
+v1 -- Baseline MLP & 87.9\% & 0.10M \\
+v2 -- Simple CNN & 90.6\% & 0.23M \\
+v5 -- + Dropout & 91.8\% & 0.23M \\
+v8 -- Final model & 93.1\% & 0.41M \\
+\end{tabularx}}
+
+\medskip
+\noindent The final model reached \textbf{92.7\%} accuracy on the held-out
+test set --- close to its validation figure, indicating little overfitting
+to the validation split.
+
+\chapter*{Development Log}
+\addcontentsline{toc}{chapter}{Appendix A: Development Log}
+
+\utadweeklog{1 (Week 1)}
+  {Set up the data pipeline and reproducible training loop; established the
+   validation split; trained the baseline MLP (v1) as a measured floor.}
+  {Python, PyTorch, NumPy.}
+  {Reproducible pipeline and a measured baseline (v1, 87.9\% val).}
+
+\utadweeklog{2 (Week 2)}
+  {Introduced convolutional blocks and batch normalization; iterated the
+   model through several revisions (v2--v4); began plotting learning curves.}
+  {PyTorch, torchvision, Matplotlib.}
+  {Convolutional model clearly beat the MLP baseline; first learning-curve
+   plots for review.}
+
+\utadweeklog{3 (Week 3)}
+  {Added dropout and data augmentation (v5--v6); ran validation sweeps over
+   learning rate and augmentation strength; introduced a learning-rate
+   schedule (v7).}
+  {PyTorch, Weights \& Biases (logging).}
+  {Closed the train/validation gap; selected hyperparameters entirely on the
+   validation split.}
+
+\utadweeklog{4 (Week 4)}
+  {Locked the final model (v8); ran the single test-set evaluation;
+   assembled an inference pipeline and a 24-test regression suite to a green
+   result.}
+  {PyTorch, Git, GitLab.}
+  {Final test accuracy of 92.7\%; green regression suite; reproducible
+   end-to-end run.}
+
+\chapter*{References}
+\addcontentsline{toc}{chapter}{Appendix B: References}
+\begin{utadrefs}
+\utadref Goodfellow, I., Bengio, Y., \& Courville, A. \emph{Deep Learning}.
+  MIT Press. \url{https://www.deeplearningbook.org/}
+\utadref Xiao, H., Rasul, K., \& Vollgraf, R. \emph{Fashion-MNIST: a Novel
+  Image Dataset for Benchmarking Machine Learning Algorithms}.
+  \url{https://arxiv.org/abs/1708.07747}
+\utadref Kingma, D. P., \& Ba, J. \emph{Adam: A Method for Stochastic
+  Optimization}. \url{https://arxiv.org/abs/1412.6980}
+\utadref PyTorch Team. \emph{PyTorch Documentation}.
+  \url{https://pytorch.org/docs/}
+\end{utadrefs}
+
+\end{document}

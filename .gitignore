@@ -1,0 +1,22 @@
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.blg
+
+# Typst / editor
+*.pdf.tmp
+.DS_Store
+Thumbs.db
+
+# NOTE: the worked-example PDFs (latex/example.pdf, typst/*.pdf) are committed
+# on purpose as visual references. Remove the lines below if you'd rather not
+# track any PDFs:
+# *.pdf

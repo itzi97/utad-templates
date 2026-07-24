@@ -1,0 +1,793 @@
+%% utad.sty -- U-tad report styling package
+%% Companion to typst/utad.typ + typst/utad-report.typ: same brand
+%% identity (fonts, palette, heading treatment, diagram helpers),
+%% same underlying data (colors sourced from the real U-tad logo file,
+%% not invented), extracted from a working, previously-compiled report
+%% rather than built from scratch.
+%%
+%% REQUIRES XeLaTeX or LuaLaTeX (needs fontspec for Poppins/Carlito).
+%%
+%% Usage:
+%%   \documentclass[11pt,a4paper]{report}
+%%   \usepackage{utad}
+%%   \begin{document}
+%%   \utadtitlepage{...}
+%%   ...
+%%   \end{document}
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{utad}[2026/07/20 U-tad report styling]
+
+% ============================================================
+%  Fonts (requires XeLaTeX/LuaLaTeX)
+% ============================================================
+\RequirePackage{fontspec}
+% Ligatures=TeX on BOTH families so "--"/"---"/"``''" input maps to
+% en-dash/em-dash/curly-quotes consistently. Without it, Carlito happens
+% to carry a "--"->en-dash ligature in its own font tables while Poppins
+% does NOT, so every heading, Gantt label, evolution-chain box and section
+% title set in Poppins rendered a literal double-hyphen while body text in
+% Carlito showed a proper en-dash -- an inconsistency confirmed by
+% compiling a two-line probe, not just assumed. Forcing the mapping on
+% both makes dashes render the same everywhere.
+\setmainfont{Carlito}[Ligatures=TeX]
+\newfontfamily\headingfont{Poppins}[Ligatures=TeX]
+
+% A FONT-INDEPENDENT strut, fixed to the class's \normalbaselineskip. The
+% built-in \strut takes its height from the CURRENT font's \baselineskip,
+% and Poppins (\headingfont) carries a taller line height than Carlito --
+% so a \strut in a Poppins label cell was both inflating the row and
+% dropping the label's first-line baseline below the Carlito value beside
+% it. \utadstrut has the same fixed metrics in both cells regardless of the
+% font in force, so label and value share one baseline and rows stay tight
+% (confirmed against an isolated probe: font-dependent \strut skewed +
+% inflated, this fixed strut aligned + tightened).
+\newcommand{\utadstrut}{\rule[-0.3\normalbaselineskip]{0pt}{\normalbaselineskip}}
+
+% ============================================================
+%  Core packages
+% ============================================================
+\RequirePackage{polyglossia}
+\setmainlanguage{english}
+\RequirePackage{geometry}
+\geometry{margin=2.5cm, headsep=18pt, headheight=22pt}
+\RequirePackage{graphicx}
+\RequirePackage[table]{xcolor}
+\RequirePackage{hyperref}
+\RequirePackage{fancyhdr}
+\RequirePackage{titlesec}
+\RequirePackage{enumitem}
+\RequirePackage{longtable}
+\RequirePackage{booktabs}
+\RequirePackage{array}
+\RequirePackage{tabularx}
+% Lets \url{...}/\href{...} break at any character, not only after
+% explicit punctuation -- without this, a long reference URL with few
+% breakable points (e.g. a plain domain + path, no slashes near the
+% margin) can silently overflow the text width into the margin, which is
+% exactly what happened with the reference-list URLs in the example
+% report before this was added.
+\RequirePackage{xurl}
+\RequirePackage{listings}
+\RequirePackage{caption}
+\RequirePackage{tocloft}
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, trees}
+\RequirePackage{pgfgantt}
+\RequirePackage[most]{tcolorbox}
+\RequirePackage{etoolbox}
+\RequirePackage{microtype}
+
+% ============================================================
+%  Paragraph style -- match the Typst side, which sets no first-line
+%  indent and separates paragraphs with vertical space instead. The
+%  report class default (first-line indent, no inter-paragraph space) made
+%  the two templates read differently for the same body copy; this brings
+%  LaTeX in line so a paragraph break looks the same in both. parskip is
+%  given a small stretch component so the last line of a page can still be
+%  justified vertically without visibly uneven paragraph gaps.
+% ============================================================
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.6em plus 0.15em minus 0.05em}
+
+% ============================================================
+%  Brand colors -- utaddark sourced from the actual U-tad logo file
+%  (#14192C), utadblue is the site's own occasional accent (#1B5FE0).
+%  Squared corners throughout, everywhere -- no \tikzset "rounded
+%  corners" anywhere in this file, deliberately, for consistency with
+%  the Typst side of this identity.
+% ============================================================
+\definecolor{utadblue}{HTML}{1B5FE0}
+\definecolor{utaddark}{HTML}{14192C}
+\definecolor{utadgrey}{HTML}{5B6472}
+\definecolor{utadlight}{HTML}{EEF3FC}
+% Two light hairline greys used only in the running header/footer, matching
+% the exact hex values used for the same rules on the Typst side.
+\definecolor{utadheaderline}{HTML}{C9D3E2}
+\definecolor{utadfootline}{HTML}{DFE5EE}
+% Callout backgrounds, matching the Typst side: the everyday note/callout
+% tint (#EEF2F8), the heavier navy-tint for `important` (#E6E8EF), and the
+% inline-code chip inside boxes (#EEF1F6).
+\definecolor{utadcallbg}{HTML}{EEF2F8}
+\definecolor{utadimpbg}{HTML}{E6E8EF}
+% Code-listing colours, sampled from the Typst side's SQL highlighting so a
+% code block reads the same in both templates: red keywords, grey-italic
+% comments, green strings, a very light grey-blue background and a hairline
+% border (matching Typst's codebg #F4F6FA / hairline #DFE5EE).
+\definecolor{utadcodekw}{HTML}{D23246}
+\definecolor{utadcodecomment}{HTML}{5B6472}
+\definecolor{utadcodestring}{HTML}{1B7A4B}
+\definecolor{utadcodebg}{HTML}{F4F6FA}
+
+\hypersetup{colorlinks=true, linkcolor=utadblue, urlcolor=utadblue,
+  citecolor=utadblue, linktoc=none}
+
+% ============================================================
+%  Headings -- number in blue (occasional accent), title text in
+%  dark navy (dominant). Same split at chapter and section level.
+% ============================================================
+% \chapter is this template's top-level division -- the same document
+% level as Typst's "=" heading (Executive Summary, Introduction, etc. use
+% \chapter here and "=" there). Typst's level-1 heading gets a thin navy
+% rule underneath it (a discrete divider, not a full \hrule); the [after]
+% argument below ports that same treatment to \chapter so the two
+% templates match at the heading level users actually compare.
+\titleformat{\chapter}[block]
+  {\headingfont\Huge\bfseries\color{utaddark}}
+  {\textcolor{utadblue}{\thechapter}}{16pt}{}
+  [\vspace{6pt}{\color{utaddark}\titlerule[0.5pt]}]
+\titlespacing*{\chapter}{0pt}{0pt}{28pt}
+% titlesec silently makes every \chapter page use pagestyle "plain"
+% (report class's own default behaviour, titlesec just inherits it) --
+% that strips the branded header/footer (running title, grey/blue
+% footer rule, styled page number) from the first page of every
+% chapter. Force those pages back onto the "fancy" style so the
+% branding is consistent on every page, not just non-chapter-opening
+% ones.
+\assignpagestyle{\chapter}{fancy}
+
+\titleformat{\section}
+  {\headingfont\Large\bfseries\color{utaddark}}{\textcolor{utadblue}{\thesection}}{10pt}{}
+\titleformat{\subsection}
+  {\headingfont\large\bfseries\color{utaddark}}{\textcolor{utadblue}{\thesubsection}}{8pt}{}
+
+% ============================================================
+%  Page style -- ported from the Typst side's header/footer, which the
+%  reader preferred over this package's original fancyhdr setup: a plain
+%  running-title / author split up top (not title + current section name)
+%  under a thin light-grey hairline, and a small logo mark + page number
+%  down below under a second hairline -- instead of a single bold blue
+%  rule and a centered page number. \utadAuthorName mirrors Typst's
+%  `author:` argument to utad-doc(); set it with \setutadauthor before
+%  \begin{document} the same way \setutadrunningtitle sets the left side.
+% ============================================================
+\pagestyle{fancy}
+\fancyhf{}
+\newcommand{\utadrunningtitle}{Report}
+\newcommand{\setutadrunningtitle}[1]{\renewcommand{\utadrunningtitle}{#1}}
+\newcommand{\utadAuthorName}{}
+\newcommand{\setutadauthor}[1]{\renewcommand{\utadAuthorName}{#1}}
+\fancyhead[L]{\headingfont\footnotesize\color{utadgrey} \utadrunningtitle}
+% Right header shows the CURRENT section (via \rightmark), not the author.
+% \nouppercase undoes report.cls's built-in \sectionmark uppercasing, so the
+% header matches the section's actual title case rather than all-caps.
+\fancyhead[R]{\headingfont\footnotesize\color{utadgrey} \nouppercase{\rightmark}}
+\fancyfoot[L]{\raisebox{-0.4pt}{\IfFileExists{logo-mark.pdf}{\includegraphics[height=7pt]{logo-mark.pdf}}{}}}
+\fancyfoot[R]{\headingfont\footnotesize\color{utadgrey}\thepage}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0.5pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{utadheaderline}\leaders\hrule height \headrulewidth\hfill}}
+\renewcommand{\footrule}{\hbox to\headwidth{\color{utadfootline}\leaders\hrule height \footrulewidth\hfill}}
+
+% ============================================================
+%  Table of contents -- same blue-number/dark-title split as headings,
+%  section entries in grey. NOTE: requires linktoc=none (set above) --
+%  hyperref's colorlinks will otherwise force every TOC entry to
+%  linkcolor and silently override all of this.
+% ============================================================
+\renewcommand{\cftchapfont}{\headingfont\bfseries\color{utaddark}}
+\renewcommand{\cftchappresnum}{\color{utadblue}}
+\renewcommand{\cftchapaftersnum}{\color{utaddark}}
+\renewcommand{\cftchappagefont}{\color{utadblue}}
+% Give chapter entries leader dots too (tocloft leaves them off by
+% default). The Typst outline dots every level, so this keeps the two
+% contents pages consistent -- every entry's title is connected to its
+% page number by the same dotted leader.
+\renewcommand{\cftchapleader}{\color{utadgrey!55}\cftdotfill{\cftdotsep}}
+\renewcommand{\cftchapdotsep}{\cftdotsep}
+
+\renewcommand{\cftsecfont}{\headingfont\color{utadgrey}}
+\renewcommand{\cftsecpresnum}{\color{utadblue}}
+\renewcommand{\cftsecaftersnum}{\color{utadgrey}}
+\renewcommand{\cftsecpagefont}{\color{utadblue}}
+
+% \headingfont here too -- WITHOUT it the subsection entries fell back to
+% the body font (Carlito) while chapters and sections were in Poppins, so
+% the contents page mixed two typefaces down its own list. All three TOC
+% levels are Poppins now (matching the Typst outline).
+\renewcommand{\cftsubsecfont}{\headingfont\color{utadgrey}}
+\renewcommand{\cftsubsecpresnum}{\color{utadblue}}
+\renewcommand{\cftsubsecaftersnum}{\color{utadgrey}}
+\renewcommand{\cftsubsecpagefont}{\color{utadblue}}
+
+% The "Contents" title itself is set by \tableofcontents via
+% \chapter*, which never passes through \titleformat{\chapter} above
+% (that only hooks numbered \chapter calls) -- without this it renders
+% in the plain LaTeX default font/color instead of the branded
+% headingfont/navy used everywhere else. tocloft exposes this title
+% specifically as \cfttoctitlefont.
+\renewcommand{\cfttoctitlefont}{\headingfont\Huge\bfseries\color{utaddark}}
+% A thin navy rule under "Contents", matching the same underline treatment
+% every \chapter title now gets (see \titleformat{\chapter}'s [after]
+% argument above) -- keeps the contents page in the same visual language
+% as the rest of the document instead of being the one heading without it.
+% Plain \rule, NOT \titlerule[0.5pt]: the optional-argument form of
+% \titlerule pulls in titlesec's \ttl@makeline, which is only defined
+% while a \titleformat's own [after] code is running -- calling it here in
+% tocloft's \cftaftertoctitle raised "Undefined control sequence" at
+% \tableofcontents (caught in nonstopmode, so it slipped through as a
+% missing rule rather than a hard stop). \rule{\linewidth}{0.5pt} draws
+% the identical hairline with no titlesec dependency.
+\renewcommand{\cftaftertoctitle}{\par\vspace{6pt}\noindent{\color{utaddark}\rule{\linewidth}{0.5pt}}\vspace{4pt}}
+
+% \utadcontents -- typeset the table of contents as clean front matter: no
+% running header and no footer (no page number), the same treatment the
+% cover gets. The contents page is front matter; a running header (which
+% repeats the document title + author) is redundant there, and a footer
+% page number on the contents itself reads oddly when the cover before it
+% is unnumbered too. The body then begins with the full branded
+% header/footer. Use this instead of \tableofcontents.
+%   - \pagestyle{empty} (scoped in a group) blanks every contents page,
+%   - the \thispagestyle override neutralises the \thispagestyle{plain}
+%     that \tableofcontents issues internally via \chapter* (which would
+%     otherwise stamp a centred page number on the first contents page),
+%   - the group restores the previous (fancy) page style afterwards.
+\newcommand{\utadcontents}{%
+  \clearpage
+  \begingroup
+    \pagestyle{empty}%
+    \let\utad@saved@thispagestyle\thispagestyle
+    \renewcommand{\thispagestyle}[1]{\utad@saved@thispagestyle{empty}}%
+    \tableofcontents
+    \clearpage
+  \endgroup
+}
+
+% ============================================================
+%  Code listings
+% ============================================================
+% Syntax highlighting to match the Typst side (which highlights via its
+% built-in `raw`): keywords red, comments grey-italic, strings green, on a
+% light grey-blue background with a hairline frame. The type names (INT,
+% NUMERIC, UUID, ...) aren't in listings' base SQL keyword set, so they're
+% added via morekeywords; Typst colours them the same red as keywords, so
+% they go in the same class here. Line numbers run down the left in a small
+% grey gutter (also mirrored on the Typst side). showstringspaces=false
+% stops the ugly visible-space glyph inside quoted strings.
+\lstset{
+  basicstyle=\ttfamily\small\color{utaddark},
+  keywordstyle=\color{utadcodekw}\bfseries,
+  commentstyle=\color{utadcodecomment}\itshape,
+  stringstyle=\color{utadcodestring},
+  morekeywords={UUID,NUMERIC,INT,INTEGER,DATE,TIMESTAMP,BOOLEAN,VARCHAR,TEXT,SERIAL,BIGINT,SMALLINT,DECIMAL,REAL,CHECK,REFERENCES,PRIMARY},
+  breaklines=true,
+  showstringspaces=false,
+  numbers=left,
+  numberstyle=\ttfamily\scriptsize\color{utadgrey},
+  numbersep=10pt,
+  xleftmargin=20pt,
+  frame=single,
+  framerule=0.6pt,
+  rulecolor=\color{utadfootline},
+  backgroundcolor=\color{utadcodebg},
+  captionpos=b,
+  aboveskip=0.9em,
+  belowskip=0.9em
+}
+
+% ============================================================
+%  Modern table style -- solid navy header (NOT utadblue -- that's
+%  reserved for small accents, never a large fill area), zebra-striped
+%  body. Usage:
+%    {\utadtable
+%    \begin{tabular}{@{}p{4cm}p{9cm}@{}}
+%    \tblheadrow \tblhead{Category} & \tblhead{Tools} \\
+%    Row 1 & ... \\
+%    \end{tabular}}
+% NOTE: \tblheadrow only sets the row background (\rowcolor); it does
+% NOT set the header text color/weight/font. That has to be applied
+% per cell via \tblhead{...}, because in a tabular row each cell is its
+% own implicit group -- text formatting commands issued before the
+% first "&" do not carry over into later cells. (An earlier version of
+% this macro put \headingfont\bfseries\color{white} directly in
+% \tblheadrow expecting it to apply to the whole row; in practice only
+% the first cell picked it up and every cell after it rendered in the
+% default body font/color, with the navy fill still covering all of
+% them -- confirmed by actually compiling and looking at the output,
+% not just reading the macro.)
+% ============================================================
+\newcommand{\utadtable}{%
+  \rowcolors{2}{utadlight}{white}%
+  \renewcommand{\arraystretch}{1.6}%
+  \setlength{\tabcolsep}{10pt}%
+}
+\newcommand{\tblheadrow}{\rowcolor{utaddark}}
+\newcommand{\tblhead}[1]{\headingfont\bfseries\color{white}#1}
+
+% ============================================================
+%  Title page -- masthead layout: thin navy accent strips top and
+%  bottom (a color detail, not a container), the logo standalone in
+%  the white body, left-aligned, then an eyebrow line, a CAPITALIZED
+%  title, and a blue degree line all sharing one left margin, then a
+%  left-aligned metadata block near the foot. One consistent left
+%  edge anchors the whole page, rather than centering everything.
+%
+%  Both accent strips are utaddark (the actual logo ink), not
+%  utadblue -- a bright blue band read as a different palette from
+%  the rest of the navy-dominant identity and clashed hard against
+%  the dark navy used everywhere else. Blue stays reserved for what
+%  it already is elsewhere in this package: small accents only (the
+%  degree line, the rule above the metadata block) -- never a large
+%  fill area.
+% ============================================================
+% Set these with \renewcommand before calling \utadtitlepage -- same
+% pattern as the original report, and avoids TeX's hard 9-argument
+% limit on macros (a 14-argument \utadtitlepage is not actually
+% possible as a single command; this is the standard workaround).
+% Looks for "logo-wordmark.pdf" in the working directory -- the DARK
+% ink lockup (mark + wordmark in utaddark), since the logo now sits in
+% the white body rather than on a navy band. Pre-rendered from the
+% shipped .svg since pdfLaTeX/XeLaTeX can't rasterize SVG directly;
+% regenerate with cairosvg/inkscape if you edit the source .svg.
+% Silently skips the logo graphic if the file isn't found rather than
+% erroring, so the template still compiles out of the box.
+% Cover fields. The title block uses \utadTitle / \utadSubtitle /
+% \utadDegree; the info box shows Subject / Year / Teacher / Author / Date
+% -- the same five fields (and order) as the Typst cover. The author is
+% \utadAuthorName (set once with \setutadauthor, and reused in the running
+% header), so there's a single source of truth for it.
+\newcommand{\utadTitle}{Report Title}
+\newcommand{\utadSubtitle}{Academic Division}
+\newcommand{\utadDegree}{Degree Name}
+\newcommand{\utadSubject}{Subject}
+\newcommand{\utadYear}{Year}
+\newcommand{\utadTeacher}{Teacher Name}
+\newcommand{\utadDate}{Date}
+% Full lockup on the cover: mark + "U-tad" + "University of Technology,
+% Arts & Design" tagline (logo-full.pdf). Wider than the bare wordmark, so
+% the width is larger to keep the mark a comparable size.
+\newcommand{\utadLogoFile}{logo-full.pdf}
+\newlength{\utadLogoWidth}
+\setlength{\utadLogoWidth}{5.2cm}
+\newlength{\utadlblw}  % width of the cover info-box label column (computed)
+
+\newcommand{\utadtitlepage}{%
+  \begin{titlepage}
+  \thispagestyle{empty}
+  % Neutralise the document-wide \parskip on the cover: the title page
+  % positions everything with explicit \vspace, and a non-zero \parskip
+  % also silently pushes each p{} label cell's first line down relative to
+  % its value (breaking the metadata baseline alignment -- verified: the
+  % same table aligns with \parskip=0 and skews with \parskip>0). The
+  % cover manages its own spacing, so zero it here.
+  \setlength{\parskip}{0pt}%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[utaddark] (current page.north west) rectangle ([yshift=-0.35cm]current page.north east);
+    \fill[utaddark] (current page.south west) rectangle ([yshift=0.35cm]current page.south east);
+  \end{tikzpicture}\par
+  % ^ the \par is load-bearing: an overlay tikzpicture in vertical mode
+  % leaves the following content in its paragraph, which shifted the logo
+  % ~0.09cm to the right of the left margin (so it sat slightly inboard of
+  % the title/metadata below it). Ending the paragraph here lets the logo
+  % start fresh flush on the margin, aligned with everything else.
+  \vspace*{2.2cm}
+  \noindent\IfFileExists{\utadLogoFile}{\includegraphics[width=\utadLogoWidth]{\utadLogoFile}}{}\par
+  % Vertical rhythm: two FLEXIBLE gaps (\stretch{1.15} above the title
+  % block, \stretch{1} below it) share the free space, rather than a fixed
+  % gap above and one \vfill dumping all the slack below. That lands the
+  % title just above the optical centre with balanced breathing above and
+  % below, keeping the logo pinned near the top and the metadata near the
+  % foot -- instead of the title floating in the upper third over one big
+  % empty zone. Same 1.15:1 ratio as the Typst cover, so both rebalance
+  % identically and adapt as the metadata block's height changes.
+  % \raggedright on the three display lines: they are left-anchored on the
+  % margin (\noindent), so they must NOT be justified. Without it, a title
+  % (or degree) long enough to wrap to a second line has its first line
+  % stretched to the full \linewidth, inflating the inter-word spaces
+  % (e.g. a wide gap between the first two words of a two-line title).
+  \vspace{\stretch{1.15}}
+  \noindent{\raggedright\headingfont\color{utadgrey}\large \MakeUppercase{\utadSubtitle} \par}
+  \vspace{0.15cm}
+  \noindent{\raggedright\headingfont\color{utaddark}\bfseries\fontsize{34}{38}\selectfont \MakeUppercase{\utadTitle} \par}
+  \vspace{0.55cm}
+  \noindent{\raggedright\headingfont\color{utadblue}\Large \utadDegree \par}
+  \vspace{\stretch{1}}
+  \noindent\textcolor{utadblue}{\rule{\linewidth}{1.2pt}}\\[10pt]
+  % Info box: bold muted-grey labels (right-aligned, same grey as the
+  % "ACADEMIC DIVISION" eyebrow), then navy values (left-aligned) -- a clean
+  % two-column "spec sheet", separated by whitespace only (no divider rule),
+  % matching the Typst cover field-for-field (Subject / Year / Teacher /
+  % Author / Date).
+  %
+  % The label column is sized to the widest label via \settowidth, so the
+  % widest label sits ON the left margin and the whole block anchors on the
+  % same left edge as the logo/title (left-justified, not floating inset).
+  % A single 14pt @{\hspace} is the only gap between label and value.
+  %
+  % \utadstrut (a fixed strut on \normalbaselineskip, identical in both
+  % cells regardless of font) keeps each label on the same baseline as its
+  % value -- the built-in \strut would take the label's bold-font line
+  % height and drop the label below the value. Bold labels, regular values.
+  \settowidth{\utadlblw}{\bfseries Subject}%
+  \settowidth{\dimen@}{\bfseries Teacher}%
+  \ifdim\dimen@>\utadlblw \setlength{\utadlblw}{\dimen@}\fi
+  {\renewcommand{\arraystretch}{1.25}%
+  \begin{tabular}{@{}p{\utadlblw}@{\hspace{14pt}}p{\dimexpr\linewidth-\utadlblw-14pt\relax}@{}}
+  {\utadstrut\bfseries\color{utadgrey}\normalsize\hfill Subject} & {\utadstrut\color{utaddark}\utadSubject} \\
+  {\utadstrut\bfseries\color{utadgrey}\normalsize\hfill Year} & {\utadstrut\color{utaddark}\utadYear} \\
+  {\utadstrut\bfseries\color{utadgrey}\normalsize\hfill Teacher} & {\utadstrut\color{utaddark}\utadTeacher} \\
+  {\utadstrut\bfseries\color{utadgrey}\normalsize\hfill Author} & {\utadstrut\color{utaddark}\utadAuthorName} \\
+  {\utadstrut\bfseries\color{utadgrey}\normalsize\hfill Date} & {\utadstrut\color{utaddark}\utadDate} \\
+  \end{tabular}}
+  \vspace{1.4cm}
+  \end{titlepage}
+}
+
+% ============================================================
+%  \utadmetarow{Label}{Value} -- an extra metadata line, styled to
+%  match the cover info box (bold muted-grey label, navy value).
+%
+%  The cover's five-field box (Subject / Year / Teacher / Author /
+%  Date) is fixed by design, so document metadata that doesn't fit
+%  those fields -- Company, Period, Supervisor, Cohort, ... -- goes
+%  in the BODY, typically a short block under the first heading (or
+%  just below the title). This macro gives those lines the same
+%  spec-sheet look as the cover: right-aligned bold grey label, a
+%  14pt gap, then a navy value that wraps in the remaining width.
+%
+%  Consecutive rows line up because the label column is a fixed
+%  width (\utadmetalabelwidth). If your labels are wider than the
+%  3cm default, widen it once before the first row:
+%      \setlength{\utadmetalabelwidth}{3.6cm}
+% ============================================================
+\newlength{\utadmetalabelwidth}
+\setlength{\utadmetalabelwidth}{3cm}
+\newcommand{\utadmetarow}[2]{%
+  \par\noindent
+  {\renewcommand{\arraystretch}{1.25}%
+  \begin{tabular}{@{}p{\utadmetalabelwidth}@{\hspace{14pt}}p{\dimexpr\linewidth-\utadmetalabelwidth-14pt\relax}@{}}
+  {\utadstrut\bfseries\color{utadgrey}\normalsize\hfill #1} & {\utadstrut\color{utaddark}#2}
+  \end{tabular}}\par
+}
+
+% ============================================================
+%  Weekly-log block -- mirrors Typst's weeklog() function.
+%  Usage: \utadweeklog{1 (Jul 1--3)}{tasks text}{tools text}{outcome text}
+% ============================================================
+\newcommand{\utadweeklog}[4]{%
+  % \parskip is zeroed for the whole block (via the group) so the spacing
+  % between the Week label / Tasks / Tools / Outcome lines is set ONLY by
+  % the explicit \vspace values below -- otherwise the document-wide
+  % \parskip stacks on top of each \par here and the block reads much
+  % looser than the tight Typst weeklog it mirrors.
+  \par\begingroup\setlength{\parskip}{0pt}%
+  % Not \bfseries -- a bold, fully-saturated utadblue at \large read as
+  % too loud/heavy for a repeated per-week label (same complaint as the
+  % Typst side's equivalent, tuned the same way there). Medium weight via
+  % Poppins Medium, plain (non-bold) \large, same color kept for the
+  % at-a-glance "new week starts here" scan cue, just softer. [Ligatures=TeX]
+  % is repeated on this inline \fontspec because an inline \fontspec does
+  % NOT inherit the option given to \newfontfamily\headingfont -- without
+  % it the "Jul 1--3" in a week label rendered a literal double-hyphen
+  % while the same dash in the Carlito body converted to an en-dash.
+  \noindent{\fontspec{Poppins Medium}[Ligatures=TeX]\large\color{utadblue} Week #1}\par\vspace{4pt}
+  \noindent\textbf{\color{utadgrey} Tasks:} #2\par\vspace{6pt}
+  \noindent\textbf{\color{utadgrey} Tools used:} #3\par\vspace{6pt}
+  \noindent\textbf{\color{utadgrey} Outcome:} #4\par\vspace{10pt}
+  \noindent\textcolor{utadblue!40}{\rule{\linewidth}{0.6pt}}%
+  \endgroup\par\vspace{14pt}
+}
+
+% ============================================================
+%  Reference list -- numbered, hanging-indent bibliography style
+%  without needing bibtex/biblatex for a short list.
+%  Usage: \begin{utadrefs} \utadref One entry. \utadref Another. \end{utadrefs}
+% ============================================================
+\newenvironment{utadrefs}{%
+  \begin{enumerate}[leftmargin=2.4em, itemindent=0pt, labelsep=0.6em,
+    itemsep=8pt, label={[\arabic*]}]
+}{%
+  \end{enumerate}
+}
+\newcommand{\utadref}{\item}
+
+% ============================================================
+%  Evolution-chain diagram -- horizontal chain of labelled boxes
+%  connected by arrows, wrapping into multiple rows if there are more
+%  than \utadchainperrow items (default 4), matching the Typst
+%  evolution-chain()'s per-row wrapping fix. Styles: "start" (muted
+%  grey), "mid" (light navy tint), "final" (solid navy).
+%  Usage:
+%    \begin{utadchain}
+%    \utadchainbox{start}{v1}{Array columns}
+%    \utadchainbox{mid}{v2}{Junction tables}
+%    \utadchainbox{final}{v3}{Enforcement}
+%    \end{utadchain}
+% ============================================================
+\newcounter{utadchaincol}
+\newcommand{\utadchainperrow}{4}
+\newlength{\utadchainboxw}
+\newlength{\utadchainboxh}
+\setlength{\utadchainboxh}{1.9cm}
+% Horizontal gap reserved between boxes for the connecting arrow. The box
+% width is computed from this so boxes + gaps exactly fill \textwidth -- the
+% earlier version left only ~3pt between boxes, so the arrows were invisible
+% and their heads overlapped the next box. A real gap gives the arrow room
+% to read as an arrow, and it's drawn edge-to-edge (east of one box to WEST
+% of the next) so it lives entirely in the gap, never on top of a box.
+\newlength{\utadchaingap}
+\setlength{\utadchaingap}{0.7cm}
+
+% Minimum width the auto-layout keeps each box at or above (a 2-3 word label
+% at \footnotesize needs roughly this). This is the single knob that turns
+% the old manual per-row trial-and-error into an automatic choice.
+\newlength{\utadchainminw}
+\setlength{\utadchainminw}{2.6cm}
+
+% Auto per-row: for N items, pick a BALANCED per-row count that keeps every
+% box >= \utadchainminw. p_max = the most columns whose box width still meets
+% the minimum (found by stepping down from N); then rows = ceil(N / p_max)
+% and per-row = ceil(N / rows), so the rows come out even -- e.g. 6 items give
+% 3+3 (not 4+2), 8 items give 4+4. Sets \utadchainperrow.
+\newif\ifutad@chainloop
+\newcounter{utad@chaintry}
+\newcounter{utad@chainrows}
+\newcounter{utad@chainpr}
+\newcommand{\utadsetchainperrow}[1]{% #1 = item count N
+  \setcounter{utad@chaintry}{#1}%
+  \utad@chainlooptrue
+  \loop
+    \setlength{\utadchainboxw}{\dimexpr(\textwidth-6pt-\utadchaingap*(\value{utad@chaintry}-1))/\value{utad@chaintry}\relax}%
+    \ifdim\utadchainboxw<\utadchainminw
+      \ifnum\value{utad@chaintry}>1 \addtocounter{utad@chaintry}{-1}\else \utad@chainloopfalse\fi
+    \else
+      \utad@chainloopfalse
+    \fi
+  \ifutad@chainloop \repeat
+  % \value{utad@chaintry} is now p_max
+  \setcounter{utad@chainrows}{1}%
+  \@whilenum\numexpr\value{utad@chainrows}*\value{utad@chaintry}\relax<#1\do{\stepcounter{utad@chainrows}}%
+  \setcounter{utad@chainpr}{1}%
+  \@whilenum\numexpr\value{utad@chainpr}*\value{utad@chainrows}\relax<#1\do{\stepcounter{utad@chainpr}}%
+  \edef\utadchainperrow{\the\value{utad@chainpr}}%
+}
+
+% The real box+arrow renderer (run at \end, once the per-row is known).
+% Box width = (textwidth - (perrow-1) gaps) / perrow, so the boxes plus the
+% inter-box arrow gaps fill the line exactly. text width (= box width minus
+% the 6pt inner sep each side) makes a long label WRAP inside the box instead
+% of stretching it past the others.
+\newcommand{\utad@chainrender}[3]{%
+  \setlength{\utadchainboxw}{\dimexpr(\textwidth-6pt-\utadchaingap*(\utadchainperrow-1))/\utadchainperrow\relax}%
+  \ifnum\value{utadchaincol}=0
+    \node[#1box, minimum width=\utadchainboxw,
+      text width=\dimexpr\utadchainboxw-14pt\relax, anchor=north west]
+      (utadchainnode) at (utadchainstart) {\textbf{#2}\\#3};
+    \coordinate (utadchainstart) at ($(utadchainstart)+(0,-\utadchainboxh-10pt)$);
+  \else
+    \node[#1box, minimum width=\utadchainboxw,
+      text width=\dimexpr\utadchainboxw-14pt\relax, anchor=west]
+      (utadchainnode) at ($(utadchainprev)+(\utadchaingap,0)$) {\textbf{#2}\\#3};
+    \draw[arr] (utadchainprev) -- (utadchainnode.west);
+  \fi
+  \coordinate (utadchainprev) at (utadchainnode.east);
+  \stepcounter{utadchaincol}%
+  \ifnum\value{utadchaincol}=\utadchainperrow \setcounter{utadchaincol}{0}\fi
+}
+
+% During collection, \utadchainbox just records its args (so we can count the
+% items and choose the per-row BEFORE any box is drawn).
+\newcommand{\utad@autostr}{auto}
+\newcommand{\utad@chainlist}{}
+\newcommand{\utad@chaincollect}[3]{%
+  \stepcounter{utad@chainn}%
+  \g@addto@macro\utad@chainlist{\utad@chainrender{#1}{#2}{#3}}%
+}
+\newcommand{\utadchainbox}[3]{}% installed by the environment
+\newcounter{utad@chainn}
+
+% \begin{utadchain}          -> per-row chosen automatically from the item count
+% \begin{utadchain}[3]       -> force 3 per row (manual override, as before)
+\newenvironment{utadchain}[1][auto]{%
+  \def\utad@chainopt{#1}%
+  \global\let\utad@chainlist\@empty
+  \setcounter{utad@chainn}{0}%
+  \let\utadchainbox\utad@chaincollect
+}{%
+  \ifdefstring{\utad@chainopt}{auto}{%
+    \utadsetchainperrow{\value{utad@chainn}}%
+  }{%
+    \edef\utadchainperrow{\utad@chainopt}%
+  }%
+  \setcounter{utadchaincol}{0}%
+  \noindent
+  \begin{tikzpicture}[
+      box/.style={rectangle, thick, minimum height=\utadchainboxh,
+        align=center, font=\headingfont\footnotesize, inner sep=6pt},
+      startbox/.style={box, draw=utadgrey, text=utadgrey, fill=white},
+      midbox/.style={box, draw=utaddark, text=utaddark, fill=utadlight},
+      finalbox/.style={box, draw=utaddark, text=white, fill=utaddark},
+      arr/.style={-{Stealth[length=2.4mm, width=2mm]}, utadgrey, line width=0.9pt}
+  ]
+    \coordinate (utadchainprev) at (0,0);
+    \coordinate (utadchainstart) at (0,0);
+    \utad@chainlist
+  \end{tikzpicture}\par\vspace{6pt}%
+}
+
+% ============================================================
+%  Simple proportional timeline / Gantt chart -- thin wrapper around
+%  pgfgantt with the U-tad palette pre-applied (navy = done, light
+%  grey = planned, blue diamond = milestone), matching Typst's
+%  timeline() function. For anything more elaborate, use pgfgantt
+%  directly -- this wrapper covers the common case only.
+%  Usage:
+%    \begin{utadtimeline}{31}
+%    \ganttbar{Sales Schema (v1--v8)}{1}{15} \\
+%    \ganttmilestone{Stakeholder Demo}{14} \\
+%    \end{utadtimeline}
+% ============================================================
+\newenvironment{utadtimeline}[1]{%
+  \begin{ganttchart}[
+      vgrid={draw=utadgrey!15},
+      canvas/.append style={draw=none},
+      x unit=0.3cm,
+      y unit title=0.7cm,
+      y unit chart=0.55cm,
+      title height=1,
+      bar height=0.5,
+      bar label font=\headingfont\footnotesize,
+      milestone label font=\headingfont\footnotesize,
+      title label font=\tiny,
+      title/.append style={draw=none, fill=white},
+      bar/.append style={fill=utaddark, draw=utaddark},
+      milestone/.append style={fill=utadblue, draw=utadblue, shape=diamond, inner sep=1pt},
+      bar progress label font=\tiny,
+      % Finish-to-start dependency arrows (\ganttlink{from}{to}, bars named
+      % with `name=`): accent-blue elbow with a white casing drawn underneath
+      % (preaction) so the link stays legible where it crosses a navy bar --
+      % the same treatment as the Typst timeline.
+      link bulge=2, link tolerance=4,
+      link/.style={-{Stealth[length=1.6mm, width=1.4mm]}, utadblue,
+        line width=0.7pt, preaction={draw=white, line width=2.1pt}},
+  ]{1}{#1}
+  \gantttitlelist{1,...,#1}{1} \\
+}{%
+  \end{ganttchart}
+}
+% For a "planned" (not-yet-completed) bar, override the fill inline --
+% this exact pattern is already proven working (used in the submitted
+% report itself):
+%   \ganttbar[bar/.append style={fill=utadgrey!35, draw=utadgrey!60}]
+%     {Spring Boot MVC (planned)}{21}{31}
+% (A wrapped "\utadganttplanned" shortcut macro was tried here and
+% removed -- pgfkeys doesn't reliably parse a style expression that's
+% been pre-expanded through a macro before reaching the `[...]`
+% argument, even though the same expression written directly inline
+% works fine. Not worth fighting; write it inline as above.)
+
+% ============================================================
+%  Callout / note / exercise boxes -- parity with the Typst side
+% ============================================================
+% Shared "left-rule callout" look, matching Typst's callout()/note()/
+% important(): squared corners, no outer frame, a light tinted background,
+% a thick accent rule down the left edge, and a bold accent-coloured title
+% at the top followed by the body. All are `breakable` (may split across a
+% page). Pass an optional title in [...]; pass an empty [] for no title.
+%
+%   \begin{utadcallout}[Heading] ... \end{utadcallout}   navy accent (generic)
+%   \begin{utadnote} ... \end{utadnote}                  blue accent, "Note"
+%   \begin{utadnote}[Reminder] ... \end{utadnote}        blue accent, custom title
+%   \begin{utadimportant} ... \end{utadimportant}        navy accent, heavier tint
+%
+% base -- #1 accent colour, #2 background colour, #3 title text (may be blank)
+\newtcolorbox{utad@callbase}[3]{%
+  enhanced, breakable, sharp corners, boxrule=0pt, frame hidden,
+  colback=#2, left=11pt, right=11pt, top=9pt, bottom=9pt,
+  borderline west={2.5pt}{0pt}{#1},
+  before upper={\notblank{#3}{{\headingfont\bfseries\color{#1}#3}\par\vspace{3pt}}{}},
+}
+\newenvironment{utadcallout}[1][Note]%
+  {\begin{utad@callbase}{utaddark}{utadcallbg}{#1}}{\end{utad@callbase}}
+\newenvironment{utadnote}[1][Note]%
+  {\begin{utad@callbase}{utadblue}{utadcallbg}{#1}}{\end{utad@callbase}}
+\newenvironment{utadimportant}[1][Important]%
+  {\begin{utad@callbase}{utaddark}{utadimpbg}{#1}}{\end{utad@callbase}}
+
+% Titled exercise / problem box -- a hairline frame with a navy title bar
+% (white bold text), then the body below. Mirrors Typst's exercise(title, body).
+%   \begin{utadexercise}{Prove that ...} ... \end{utadexercise}
+\newtcolorbox{utadexercise}[1]{%
+  enhanced, breakable, sharp corners, boxrule=0.6pt, colframe=utadfootline,
+  colback=white, coltitle=white, colbacktitle=utaddark,
+  fonttitle=\headingfont\bfseries, title={#1},
+  left=11pt, right=11pt, top=9pt, bottom=9pt,
+  lefttitle=11pt, righttitle=11pt, toptitle=6pt, bottomtitle=6pt,
+}
+
+% Solution-set convention (mirrors Typst question()/solution()): restate the
+% given problem in `utadquestion`, then open your worked answer with the
+% \utadsolution lead-in. The question box is a light tinted panel with a navy
+% left rule and a small grey "QUESTION" eyebrow.
+%   \begin{utadquestion} ...given problem... \end{utadquestion}
+%   \utadsolution Your worked answer follows...
+\newtcolorbox{utadquestion}[1][Question]{%
+  enhanced, breakable, sharp corners, boxrule=0pt, frame hidden,
+  colback=utadcallbg, left=11pt, right=11pt, top=9pt, bottom=9pt,
+  borderline west={2.5pt}{0pt}{utaddark},
+  before upper={{\headingfont\bfseries\scriptsize\color{utadgrey}\MakeUppercase{#1}}\par\vspace{3pt}},
+}
+\newcommand{\utadsolution}{\textbf{\textcolor{utaddark}{Solution.}}\space}
+
+% AI prompt / response boxes -- inline bold label, navy left rule, light tint.
+% Mirror Typst's prompt()/response().
+\newtcolorbox{utadprompt}{%
+  enhanced, breakable, sharp corners, boxrule=0pt, frame hidden,
+  colback=utadcallbg, left=11pt, right=11pt, top=9pt, bottom=9pt,
+  borderline west={2.5pt}{0pt}{utaddark},
+  before upper={\textbf{Prompt: }\itshape},
+}
+\newtcolorbox{utadresponse}{%
+  enhanced, breakable, sharp corners, boxrule=0pt, frame hidden,
+  colback=utadcallbg, left=11pt, right=11pt, top=9pt, bottom=9pt,
+  borderline west={2.5pt}{0pt}{utaddark},
+  before upper={\textbf{Response: }},
+}
+
+% ============================================================
+%  Organigram / org-chart tree
+% ============================================================
+% A styled TikZ tree for organisation / placement charts, matching the
+% Typst orgchart(). Node styles: `orgroot` (navy fill, white text -- the
+% top box), `orgnode` (light navy-tint fill, navy text -- default), and
+% `orghi` (accent-blue fill, white text -- e.g. the box you sat in). The
+% connectors are the standard square "fork down" org-chart elbows.
+%
+%   \begin{utadorgchart}
+%   \node[orgroot]{Acme Group}
+%     child { node[orgnode]{Acme Software --- B2B}
+%       child { node[orgnode]{Commercial}
+%         child { node[orghi]{Internship Placement} } }
+%       child { node[orgnode]{R\&D} }
+%       child { node[orgnode]{Engineering} } }
+%     child { node[orgnode]{Acme Retail --- B2C} };
+%   \end{utadorgchart}
+%
+% Sibling/level distance are set for ~3cm boxes; adjust `sibling distance`
+% (and per-level overrides) if a wide row of children gets tight. For a
+% deep, very uneven tree the `forest` package gives tighter packing, but
+% the built-in `trees` layout below keeps the template dependency-free.
+\newlength{\utadorgboxw}
+\setlength{\utadorgboxw}{2.7cm}
+\newenvironment{utadorgchart}{%
+  \par\medskip\noindent\begin{center}\begin{tikzpicture}[
+      every node/.style={font=\headingfont\footnotesize},
+      orgbox/.style={rectangle, draw=utaddark, line width=0.9pt, align=center,
+        inner sep=5pt, minimum height=0.9cm, text width=\utadorgboxw},
+      orgroot/.style={orgbox, fill=utaddark, text=white},
+      orgnode/.style={orgbox, fill=utadlight, text=utaddark},
+      orghi/.style={orgbox, draw=utadblue, fill=utadblue, text=white},
+      level distance=1.45cm,
+      edge from parent/.style={draw=utadgrey!55, line width=0.7pt,
+        edge from parent fork down},
+      level 1/.style={sibling distance=6.0cm},
+      level 2/.style={sibling distance=3.3cm},
+      level 3/.style={sibling distance=3.3cm},
+    ]
+}{%
+  \end{tikzpicture}\end{center}\par\medskip
+}
+
+\endinput

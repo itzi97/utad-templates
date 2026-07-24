@@ -1,0 +1,61 @@
+% ============================================================
+%  U-tad report — STARTER template (LaTeX)
+%
+%  To start a new document: copy this whole `latex/` folder (you need
+%  utad.sty and the logo-*.pdf files alongside this .tex), rename this
+%  file, fill in the fields below, and write your content.
+%
+%  Compile with XeLaTeX, run TWICE so the table of contents resolves:
+%      xelatex starter.tex
+%      xelatex starter.tex
+%
+%  See example.tex / example.pdf for every feature in use, and
+%  docs/GUIDE.md ("Component reference") for every helper documented
+%  with its LaTeX and Typst form side by side.
+% ============================================================
+\documentclass[11pt,a4paper]{report}
+\usepackage{utad}
+
+% ---- cover + metadata (all optional; sensible defaults if omitted) ----
+\renewcommand{\utadTitle}{Report Title}
+\renewcommand{\utadSubtitle}{Academic Division}   % small eyebrow over the title
+\renewcommand{\utadDegree}{Software Engineering w/ AI \& Data Science}
+\renewcommand{\utadSubject}{Subject}
+\renewcommand{\utadYear}{4}
+\renewcommand{\utadTeacher}{Teacher Name}
+\renewcommand{\utadDate}{Month YYYY}
+\setutadauthor{Your Name}
+\setutadrunningtitle{Short Title}                 % shown in the page header
+
+\begin{document}
+\utadtitlepage       % cover page
+\utadcontents        % clean table of contents (front matter, no header/footer)
+
+\chapter{First Chapter}
+\section{A section}
+Write your content here.
+
+% ---- Available helpers (worked usage: example.tex; full reference with
+%      LaTeX + Typst forms and examples: docs/GUIDE.md) -----------------
+%   \begin{utadchain} \utadchainbox{start}{v1}{Label} ... \end{utadchain}
+%   \begin{utadtimeline}{31} \ganttbar[name=a]{Task}{1}{10} \\ ...
+%       \ganttlink{a}{b} \end{utadtimeline}
+%   \begin{utadorgchart} \node[orgroot]{Top}
+%       child { node[orgnode]{Child} } ; \end{utadorgchart}
+%   \begin{lstlisting}[language=Python] ... \end{lstlisting}   % numbered code
+%   \utadweeklog{1 (dates)}{tasks}{tools}{outcome}
+%   \utadmetarow{Company}{Value}    % extra body metadata, cover-styled
+%   \begin{utadrefs} \utadref{...} \end{utadrefs}
+%   \utadtable + \begin{tabularx} for striped tables
+%   \begin{utadnote}[Title] ... \end{utadnote}        % callout boxes:
+%   \begin{utadcallout}[Title] ... \end{utadcallout}  %   note (blue),
+%   \begin{utadimportant} ... \end{utadimportant}     %   callout/important (navy)
+%   \begin{utadexercise}{Title} ... \end{utadexercise}
+%   \begin{utadquestion} ...given... \end{utadquestion}  \utadsolution ...
+%   \begin{utadprompt} ... \end{utadprompt} / \begin{utadresponse} ...
+%
+% ---- Appendices (unnumbered chapter + manual TOC entry) --------------
+% \chapter*{Weekly Log Summary}
+% \addcontentsline{toc}{chapter}{Appendix A: Weekly Log Summary}
+
+\end{document}
