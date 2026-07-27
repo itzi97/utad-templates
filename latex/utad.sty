@@ -437,6 +437,25 @@
 \setlength{\utadLogoWidth}{5.2cm}
 \newlength{\utadlblw}  % width of the cover info-box label column (computed)
 
+% The metadata "spec sheet" (bold grey labels, navy values), shared by the
+% full cover (\utadtitlepage) and the compact masthead (\utadmasthead) so the
+% five fields render identically in both. Factored out of the cover verbatim
+% -- see the cover for the full rationale on \utadstrut and the \settowidth
+% label column.
+\newcommand{\utad@infobox}{%
+  \settowidth{\utadlblw}{\bfseries Subject}%
+  \settowidth{\dimen@}{\bfseries Teacher}%
+  \ifdim\dimen@>\utadlblw \setlength{\utadlblw}{\dimen@}\fi
+  {\renewcommand{\arraystretch}{1.25}%
+  \begin{tabular}{@{}p{\utadlblw}@{\hspace{14pt}}p{\dimexpr\linewidth-\utadlblw-14pt\relax}@{}}
+  {\utadstrut\bfseries\color{utadgrey}\normalsize\hfill Subject} & {\utadstrut\color{utaddark}\utadSubject} \\
+  {\utadstrut\bfseries\color{utadgrey}\normalsize\hfill Year} & {\utadstrut\color{utaddark}\utadYear} \\
+  {\utadstrut\bfseries\color{utadgrey}\normalsize\hfill Teacher} & {\utadstrut\color{utaddark}\utadTeacher} \\
+  {\utadstrut\bfseries\color{utadgrey}\normalsize\hfill Author} & {\utadstrut\color{utaddark}\utadAuthorName} \\
+  {\utadstrut\bfseries\color{utadgrey}\normalsize\hfill Date} & {\utadstrut\color{utaddark}\utadDate} \\
+  \end{tabular}}%
+}
+
 \newcommand{\utadtitlepage}{%
   \begin{titlepage}
   \thispagestyle{empty}
@@ -494,19 +513,62 @@
   % cells regardless of font) keeps each label on the same baseline as its
   % value -- the built-in \strut would take the label's bold-font line
   % height and drop the label below the value. Bold labels, regular values.
-  \settowidth{\utadlblw}{\bfseries Subject}%
-  \settowidth{\dimen@}{\bfseries Teacher}%
-  \ifdim\dimen@>\utadlblw \setlength{\utadlblw}{\dimen@}\fi
-  {\renewcommand{\arraystretch}{1.25}%
-  \begin{tabular}{@{}p{\utadlblw}@{\hspace{14pt}}p{\dimexpr\linewidth-\utadlblw-14pt\relax}@{}}
-  {\utadstrut\bfseries\color{utadgrey}\normalsize\hfill Subject} & {\utadstrut\color{utaddark}\utadSubject} \\
-  {\utadstrut\bfseries\color{utadgrey}\normalsize\hfill Year} & {\utadstrut\color{utaddark}\utadYear} \\
-  {\utadstrut\bfseries\color{utadgrey}\normalsize\hfill Teacher} & {\utadstrut\color{utaddark}\utadTeacher} \\
-  {\utadstrut\bfseries\color{utadgrey}\normalsize\hfill Author} & {\utadstrut\color{utaddark}\utadAuthorName} \\
-  {\utadstrut\bfseries\color{utadgrey}\normalsize\hfill Date} & {\utadstrut\color{utaddark}\utadDate} \\
-  \end{tabular}}
+  \utad@infobox
   \vspace{1.4cm}
   \end{titlepage}
+}
+
+% ============================================================
+%  \utadmasthead -- compact header for short deliverables
+% ============================================================
+% The LaTeX package ships only the report format (full cover + contents
+% page). For a short deliverable (a two-to-five-page assignment or problem
+% set) that is heavy: you would use the report class and delete the cover.
+% \utadmasthead is the compact alternative -- the parity match to the Typst
+% `assignment` masthead. It is NOT a separate document class: it reuses the
+% whole package (palette, fonts, callouts, tables, headings, diagrams) and
+% only swaps the front matter, so there is nothing extra to keep in sync.
+%
+% Usage: use `\section` as your top level (report allows it with no
+% \chapter, and \section does not force a page break), call \utadmasthead
+% once at the top INSIDE the document, and skip \utadtitlepage/\utadcontents:
+%
+%   \documentclass[11pt,a4paper]{report}
+%   \usepackage{utad}
+%   \renewcommand{\utadTitle}{Problem Set 3}
+%   \renewcommand{\utadSubject}{Mathematical Analysis}
+%   \setutadauthor{Your Name}
+%   \begin{document}
+%   \utadmasthead
+%   \section{Question 1}
+%   ...
+%
+% The masthead flows inline at the top of page 1 (no titlepage environment,
+% no page break): a smaller logo, the title (title case, not the cover's
+% uppercase display size), an optional subtitle, a navy rule, and the shared
+% info box. Content follows immediately underneath.
+\newcommand{\utadMastheadLogoWidth}{3.6cm}
+\newcommand{\utadmasthead}{%
+  % Flat, article-style section numbers. Under the report class with no
+  % \chapter, \section otherwise numbers as "0.1" (the chapter counter sits
+  % at 0). A compact assignment has no chapters, so drop the chapter part:
+  % sections become 1, 2, ... and subsections 1.1, 1.2, ...
+  \renewcommand{\thesection}{\arabic{section}}%
+  \renewcommand{\thesubsection}{\thesection.\arabic{subsection}}%
+  \renewcommand{\thesubsubsection}{\thesubsection.\arabic{subsubsection}}%
+  \par\noindent
+  \IfFileExists{\utadLogoFile}{\includegraphics[width=\utadMastheadLogoWidth]{\utadLogoFile}}{}\par
+  \vspace{0.45cm}
+  \noindent{\raggedright\headingfont\color{utaddark}\bfseries\LARGE \utadTitle\par}
+  \ifx\utadSubtitle\@empty\else
+    \vspace{0.12cm}
+    \noindent{\raggedright\headingfont\color{utadgrey}\large \utadSubtitle\par}
+  \fi
+  \vspace{0.35cm}
+  \noindent\textcolor{utadblue}{\rule{\linewidth}{1.2pt}}\\[8pt]
+  \utad@infobox
+  \vspace{0.7cm}
+  \par
 }
 
 % ============================================================
