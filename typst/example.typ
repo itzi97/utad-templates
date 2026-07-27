@@ -257,22 +257,22 @@ split.
 
 = Development Log
 
-#weeklog("1 (Week 1)",
+#weeklog("1",
   [Set up the data pipeline and reproducible training loop; established the validation split; trained the baseline MLP (v1) as a measured floor.],
   [Python, PyTorch, NumPy.],
   [Reproducible pipeline and a measured baseline (v1, 87.9% val).])
 
-#weeklog("2 (Week 2)",
+#weeklog("2",
   [Introduced convolutional blocks and batch normalization; iterated the model through several revisions (v2--v4); began plotting learning curves.],
   [PyTorch, torchvision, Matplotlib.],
   [Convolutional model clearly beat the MLP baseline; first learning-curve plots for review.])
 
-#weeklog("3 (Week 3)",
+#weeklog("3",
   [Added dropout and data augmentation (v5--v6); ran validation sweeps over learning rate and augmentation strength; introduced a learning-rate schedule (v7).],
   [PyTorch, Weights & Biases (logging).],
   [Closed the train/validation gap; selected hyperparameters entirely on the validation split.])
 
-#weeklog("4 (Week 4)",
+#weeklog("4",
   [Locked the final model (v8); ran the single test-set evaluation; assembled an inference pipeline and a 24-test regression suite to a green result.],
   [PyTorch, Git, GitLab.],
   [Final test accuracy of 92.7%; green regression suite; reproducible end-to-end run.])
