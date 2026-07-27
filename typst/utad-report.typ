@@ -42,12 +42,19 @@
 // ============================================================
 //  Weekly log block
 // ============================================================
-// One repeatable block per week: a bold blue "Week N" label, then
-// labelled Tasks / Tools used / Outcome lines, then a thin rule.
-// Mirrors the LaTeX report's \weeklog macro.
+// One repeatable block per week: a thin rule, then a bold blue "Week N"
+// label, then labelled Tasks / Tools used / Outcome lines.
+// Mirrors the LaTeX report's \utadweeklog macro.
+//
+// The rule opens the block rather than closing it: drawn after, the first
+// entry in a run had no rule above it while every later one did, and the
+// last entry left a rule dangling below -- uneven. Opening with it gives
+// every entry (the first included) a rule above and leaves none trailing.
 #let weeklog(week, tasks, tools, outcome) = block(
   width: 100%, above: 1em, below: 0.4em, breakable: true,
 )[
+  #line(length: 100%, stroke: 0.5pt + rgb("#c9d3e2"))
+  #v(7pt)
   #text(fill: utad-blue, weight: 500, size: 12.5pt)[Week #week]
   #v(5pt)
   #text(weight: 700, fill: muted)[Tasks: ] #tasks
@@ -55,8 +62,6 @@
   #text(weight: 700, fill: muted)[Tools used: ] #tools
 
   #text(weight: 700, fill: muted)[Outcome: ] #outcome
-  #v(7pt)
-  #line(length: 100%, stroke: 0.5pt + rgb("#c9d3e2"))
 ]
 
 // ============================================================

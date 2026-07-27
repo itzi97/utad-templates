@@ -547,6 +547,12 @@
   % \parskip stacks on top of each \par here and the block reads much
   % looser than the tight Typst weeklog it mirrors.
   \par\begingroup\setlength{\parskip}{0pt}%
+  % Divider drawn BEFORE the block, not after. Drawn after, the first entry
+  % in a run had no rule above it while every later one did, and the final
+  % entry left a rule dangling below with nothing under it -- an uneven
+  % rhythm. Before each block, every entry (the first included) opens with
+  % its own rule and none trails the last, so a run of weeks reads evenly.
+  \noindent\textcolor{utadblue!40}{\rule{\linewidth}{0.6pt}}\par\vspace{9pt}%
   % Not \bfseries -- a bold, fully-saturated utadblue at \large read as
   % too loud/heavy for a repeated per-week label (same complaint as the
   % Typst side's equivalent, tuned the same way there). Medium weight via
@@ -559,9 +565,8 @@
   \noindent{\fontspec{Poppins Medium}[Ligatures=TeX]\large\color{utadblue} Week #1}\par\vspace{4pt}
   \noindent\textbf{\color{utadgrey} Tasks:} #2\par\vspace{6pt}
   \noindent\textbf{\color{utadgrey} Tools used:} #3\par\vspace{6pt}
-  \noindent\textbf{\color{utadgrey} Outcome:} #4\par\vspace{10pt}
-  \noindent\textcolor{utadblue!40}{\rule{\linewidth}{0.6pt}}%
-  \endgroup\par\vspace{14pt}
+  \noindent\textbf{\color{utadgrey} Outcome:} #4\par
+  \endgroup\par\vspace{13pt}
 }
 
 % ============================================================
