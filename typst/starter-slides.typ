@@ -15,7 +15,8 @@
 
 #import "utad-slides.typ": *
 // Optional — diagrams on slides (Gantt, org-chart, evolution chain):
-// #import "utad-report.typ": timeline, orgchart, org-node, evolution-chain
+// #import "utad-report.typ": timeline, orgchart, org-node
+// #import "utad.typ": evolution-chain   // evolution-chain lives in the base module
 
 #let sections = ("First section", "Second section")
 

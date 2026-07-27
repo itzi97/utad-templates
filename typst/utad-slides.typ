@@ -7,8 +7,9 @@
 //  dividers, and content slides with a title rule + logo footer. It re-uses
 //  everything from utad.typ, so the callout boxes (`note`, `important`,
 //  `exercise`, …) and `utad-table` work on slides too, and the diagram
-//  helpers from utad-report.typ (`timeline`, `orgchart`, `evolution-chain`)
-//  can be dropped onto a slide by also importing that module.
+//  helpers `timeline` / `orgchart` from utad-report.typ (and
+//  `evolution-chain` from the base utad.typ) can be dropped onto a slide by
+//  also importing those modules.
 //
 //  Deliberately built with Typst core primitives only — NO external package
 //  (no Touying/Polylux) — so it compiles offline, exactly like the rest of

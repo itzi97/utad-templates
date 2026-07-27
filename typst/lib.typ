@@ -4,6 +4,7 @@
 // get the whole toolkit: utad-doc, assignment, the slide functions,
 // callouts, tables, and all diagrams.
 #import "utad.typ": *
-#import "utad-report.typ": weeklog, reference-list, evolution-chain, timeline, orgchart, org-node
+// evolution-chain now lives in utad.typ (above via *); report extras only.
+#import "utad-report.typ": weeklog, reference-list, timeline, orgchart, org-node
 #import "utad-assignment.typ": assignment, compact-info
 #import "utad-slides.typ": title-slide, section-slide, slide, focus-slide, slide-columns, agenda-slide, stat

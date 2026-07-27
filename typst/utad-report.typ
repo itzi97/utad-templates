@@ -18,6 +18,11 @@
 // ============================================================
 
 #import "utad.typ": utad-navy, utad-blue, muted, hairline, callbg, headingfont, sansfont
+// evolution-chain moved to the base module (utad.typ) so the compact
+// assignment format can use it without pulling in the report extras. Re-
+// exported here so existing `#import "utad-report.typ": evolution-chain`
+// (and `: *`) keeps working.
+#import "utad.typ": evolution-chain
 
 // ============================================================
 //  Appendices
@@ -67,76 +72,6 @@
     text(weight: 700)[[#(i + 1)]], item,
   )).flatten()
 )
-
-// ============================================================
-//  Evolution-chain diagram
-// ============================================================
-// A horizontal chain of small labelled boxes connected by arrows —
-// used for "version 1 -> version 2 -> ... " style progressions.
-// Each item is (version-label, description, style), where style is
-// one of "start" (muted grey, for a received/legacy starting point),
-// "mid" (light navy-tinted, in-progress), or "final" (solid navy,
-// the arrived-at/highlighted endpoint). Mirrors the LaTeX report's
-// schema-evolution-chain TikZ diagrams.
-#let evo-box(version, label, style: "mid") = {
-  let (bg, fg, bd) = if style == "start" {
-    (white, muted, muted)
-  } else if style == "final" {
-    (utad-navy, white, utad-navy)
-  } else {
-    (rgb("#eef2f8"), utad-navy, utad-navy)
-  }
-  box(
-    width: 100%, height: 1.5cm,
-    fill: bg, stroke: 1pt + bd, radius: 0pt, inset: 5pt,
-    align(center + horizon)[
-      #text(fill: fg, size: 10pt, weight: 700)[#version] \
-      #v(1pt, weak: true)
-      #text(fill: fg, size: 8.5pt)[#label]
-    ],
-  )
-}
-
-// Small helper: split an array into chunks of at most `n` items.
-#let chunk(arr, n) = {
-  let out = ()
-  let i = 0
-  while i < arr.len() {
-    out.push(arr.slice(i, calc.min(i + n, arr.len())))
-    i += n
-  }
-  out
-}
-
-// Boxes get `1fr` columns (so Typst divides the available width equally
-// among however many items are in that row) and arrows get `auto`
-// columns (small, fixed). This is the important part: never give the
-// boxes a fixed absolute width, or they'll overlap/overflow instead of
-// shrinking to fit. `per-row` controls how many boxes share one row
-// before wrapping to the next -- keep this low enough (3-4) that each
-// box stays wide enough for its label not to wrap into a cramped tower
-// of single words.
-#let evolution-chain(..items, per-row: 4) = {
-  let parts = items.pos()
-  let rows = chunk(parts, per-row)
-  stack(spacing: 7pt, ..rows.map(row-items => align(center, {
-    let n = row-items.len()
-    let cols = ()
-    for i in range(n) {
-      cols.push(1fr)
-      if i < n - 1 { cols.push(auto) }
-    }
-    grid(
-      columns: cols,
-      column-gutter: 3pt,
-      align: horizon,
-      ..row-items.enumerate().map(((i, it)) => {
-        let b = evo-box(it.at(0), it.at(1), style: it.at(2, default: "mid"))
-        if i == 0 { (b,) } else { (text(fill: muted, size: 13pt)[→], b) }
-      }).flatten()
-    )
-  })))
-}
 
 // ============================================================
 //  Simple proportional timeline / Gantt-style bar chart
