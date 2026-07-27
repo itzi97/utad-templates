@@ -193,7 +193,7 @@ Copy the files for one language into your project folder and import locally:
 ```
 utad-templates/
 ├── install.sh / install.ps1     one-command install (Typst + LaTeX)
-├── Makefile                     `make` to rebuild the example PDFs locally
+├── Makefile                     `make` to rebuild examples; `make check` to sanity-check a build
 ├── scripts/install-fonts.{sh,ps1}   download + install Poppins & Carlito
 ├── .github/workflows/build.yml  CI: compiles every example on push
 ├── README.md                    this file
@@ -251,6 +251,7 @@ The handful of things that trip people up on a first compile:
 | `unknown font family: Poppins` (or `Carlito`) | Fonts not installed yet | Run `./scripts/install-fonts.sh` (Windows: `.\scripts\install-fonts.ps1`), then recompile. Typst users can also point at the fonts directly: `typst compile --font-path ~/.local/share/fonts file.typ`. |
 | LaTeX: `Package fontspec Error: The font "Poppins" cannot be found` or errors about `fontspec`/`unicode` | Compiled with **pdfLaTeX** | Compile with **XeLaTeX** (or LuaLaTeX): `xelatex file.tex`. The package can't build under pdfLaTeX. In Overleaf, set *Menu → Compiler → XeLaTeX*. |
 | Typst: `file not found (searched at @local/utad:0.1.0)` | Package not installed | Run `./install.sh typst`, **or** don't install at all — copy the `typst/` files into your folder and use `#import "utad.typ": *` (see *Manual use*). |
+| Typst: `file not found (searched at logo-full.svg)` (or another `logo-*.svg`) | Logo assets missing (a fresh clone or a fork without the U-tad marks) | Pass `variant: "none"` (report) or `logo-variant: "none"` (assignment) to build without any logo, or `no-logo-slides()` at the top of a deck. `"text"` uses a plain "U-tad" wordmark. (LaTeX degrades on its own; Typst can't detect a missing file.) |
 | Table of contents / page numbers look wrong or empty (LaTeX) | Only compiled once | Run `xelatex` **twice** (the ToC needs a second pass). |
 | Header/section references show `??` (LaTeX) | Same — needs a second pass | Compile twice. |
 | A date like `Jul 1 - Jul 31` shows a hyphen, not a dash | Plain `-` used | Use a real en-dash `–` in date fields (see the starter comments). |

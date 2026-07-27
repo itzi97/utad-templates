@@ -273,8 +273,16 @@ plus a clean contents page.
 ### Headings
 
 Both systems auto-number headings and show the current section in the
-running header. LaTeX: `\chapter{}`, `\section{}`, `\subsection{}`. Typst:
-`=`, `==`, `===`.
+running header. LaTeX: `\chapter{}`, `\section{}`, `\subsection{}`,
+`\subsubsection{}`. Typst: `=`, `==`, `===`, `====`.
+
+The **fourth level** (`\subsubsection` / `====`) is styled navy Poppins bold
+with a small blue-square lead-in, one step down from the third. By default
+it is **unnumbered and absent from the contents** (LaTeX `secnumdepth` is 2;
+the Typst outline is capped at depth 3), so it doubles as a lightweight
+"named phase" heading for breaking up a long run without cluttering the TOC.
+Bump `secnumdepth`/`tocdepth` to 3 in LaTeX if you want it numbered and
+listed.
 
 ### Body metadata — `\utadmetarow`
 
@@ -354,7 +362,10 @@ one `\utadchainbox{style}{version}{label}` per step; styles are `start`,
 \end{utadchain}
 ```
 
-**Typst** — `evolution-chain((version, label, style), …)`:
+**Typst** — `evolution-chain((version, label, style), …)`. It lives in the
+**base module** (`utad.typ`), so the compact assignment can use it too — no
+need to import `utad-report.typ` for the step chain alone. (It's still
+re-exported from `utad-report.typ` for older imports.)
 
 ```typ
 #evolution-chain(
@@ -492,6 +503,40 @@ everything from `utad.typ`, so `callout` / `note` / `important` /
 
 See `assignment.typ` (`assignment.pdf`) for a worked two-page problem set.
 Needs the same logo `.svg` files in the folder.
+
+### LaTeX compact deliverables — `\utadmasthead`
+
+The LaTeX side has the same option without a separate class: call
+`\utadmasthead` instead of `\utadtitlepage`/`\utadcontents`, and use
+`\section` as your top level. It reuses the whole package and just swaps the
+cover for a compact inline header (logo, title, optional subtitle, navy rule,
+the shared info box); `\section`/`\subsection` renumber flat (1, 1.1) since
+there are no chapters.
+
+```latex
+\documentclass[11pt,a4paper]{report}
+\usepackage{utad}
+\renewcommand{\utadTitle}{Problem Set 3}
+\renewcommand{\utadSubtitle}{Series and Fourier Transforms}  % optional
+\renewcommand{\utadSubject}{Mathematical Analysis}
+\setutadauthor{Your Name}
+\begin{document}
+\utadmasthead
+\section{Question 1}
+...
+```
+
+### Building without the logo assets
+
+The U-tad logo files are the university's property and aren't covered by the
+MIT license, so a fresh clone or a fork may not have them. LaTeX degrades
+automatically (every logo is wrapped in `\IfFileExists`, so a missing asset
+just leaves a bare cover). **Typst has no file-existence check**, so it can't
+do that silently — instead pass `variant: "none"` (report) or `logo-variant:
+"none"` (assignment) to skip every logo image, or call `no-logo-slides()`
+once at the top of a deck. `"text"` stands in a plain "U-tad" wordmark;
+`"none"` omits the mark. Without one of these, Typst stops at the first
+missing `logo-*.svg` with a "file not found" error.
 
 ### Solution-set convention
 

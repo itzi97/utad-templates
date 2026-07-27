@@ -8,6 +8,31 @@ project aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **PDF metadata** (both): documents now carry a real title/author. LaTeX
+  wires `\utadTitle` / `\utadAuthorName` / `\utadSubject` into `pdftitle` /
+  `pdfauthor` / `pdfsubject` (deferred to `\AtBeginDocument` so it reads the
+  author's values) and sets `bookmarksnumbered` so the PDF sidebar matches
+  the numbered contents; Typst `set document(title: …)` now receives the real
+  title instead of a generic "U-tad document" fallback.
+- **Fourth heading level** (both): `\subsubsection` (LaTeX) and level-4
+  headings (`====`, Typst) are styled to continue the family — navy Poppins
+  bold, one step down, led by a small blue square instead of a number.
+  Unnumbered and out of the contents by default, so they double as a
+  lightweight "named phase" for breaking up a long run.
+- **LaTeX `\utadmasthead`** — a compact header for short deliverables (no
+  cover page, no separate contents page): logo, title, optional subtitle,
+  navy rule, and the shared info box, flowing inline at the top of page 1.
+  The parity match to the Typst `assignment` template; use `\section` as the
+  top level. Not a separate document class — it reuses the whole package.
+- **`make check`** — a build sanity pass for both languages reporting page
+  count per PDF, undefined `\ref`/`\cite` warnings, and Overfull `\hbox`
+  warnings above a tunable threshold (`make check OVERFULL=5.0`).
+- **Typst: build without the logo assets** via `variant: "none"` / `"text"`
+  (report and assignment) or `no-logo-slides()` (a deck) — a single switch
+  that avoids every logo image, cover/masthead and page-footer mark alike, so
+  a fresh clone or a fork that stripped the (non-MIT) U-tad marks still
+  builds. Typst has no file-existence check, so this cannot be automatic the
+  way the LaTeX `\IfFileExists` guards are.
 - LaTeX `\utadmetarow{Label}{Value}` — a body metadata line styled to match
   the cover's spec-sheet info box (right-aligned bold grey label, navy value,
   aligned on a fixed `\utadmetalabelwidth` label column). For document
@@ -33,6 +58,15 @@ project aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **List markers** (both): the second-level itemize marker (LaTeX) and the
+  deeper-level list markers (Typst) were the default en dash; they are now
+  small filled squares — navy at level 1, the blue accent at level 2, grey at
+  level 3 — matching the template's squared-corner identity and no longer
+  slipping a stray dash into a dash-free document.
+- **Typst `evolution-chain` moved to the base module** (`utad.typ`) from
+  `utad-report.typ`, so the compact `assignment` format can use the step
+  chain without importing the report extras (weekly log, Gantt). Still
+  re-exported from `utad-report.typ`, so existing imports keep working.
 - LaTeX `utadchain` now lays itself out automatically: `\begin{utadchain}`
   (no argument) picks a balanced number of boxes per row that keeps each box
   above a minimum width for the current `\textwidth` (8 items → 4+4, 6 → 3+3,
@@ -52,6 +86,17 @@ project aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **LaTeX table-of-contents entries are now clickable links.** The package
+  set `linktoc=none` to protect the tocloft palette; it now uses
+  `linktoc=all` and scopes `linkcolor=.` to `\utadcontents`, so the contents
+  become real links while keeping the blue-number / navy-chapter / grey-
+  section colouring (and body cross-references keep the blue link accent).
+- **Weekly-log divider** (both) is drawn before each block instead of after,
+  so the first entry in a run has a rule above it and none dangles below the
+  last — an even rhythm.
+- **LaTeX evolution chain** now declares the TikZ `calc` library explicitly.
+  It was relying on a transitive load (via `pgfgantt`), so the chain would
+  break if that package were reordered or removed.
 - Running header (both templates) showed the **author's name** repeated on
   every page instead of the current section. The right-hand running head now
   tracks the current section: LaTeX uses `\nouppercase{\rightmark}` (the
