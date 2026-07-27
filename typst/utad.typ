@@ -305,6 +305,17 @@
 ) = {
   let short = if short-title == auto { title } else { short-title }
 
+  // Whether this document uses the (trademarked, non-MIT) logo image assets.
+  // Typst has NO file-existence check and NO try/catch -- unlike the LaTeX
+  // side, which wraps every logo in \IfFileExists and silently degrades to a
+  // bare cover -- so a fresh clone (or a fork that stripped the U-tad marks)
+  // cannot auto-detect missing SVGs; it would hard-fail at the first image().
+  // Instead, `variant: "none"` (or "text") is a single, documented switch
+  // that avoids EVERY logo image in the document -- the cover below AND the
+  // page footer's mark -- so the template builds with no asset files present.
+  // "text" stands in a text "U-tad" wordmark; "none" omits the mark entirely.
+  let bare = variant == "none" or variant == "text"
+
   // Pick the cover logo — DARK ink, since it now sits standalone in the
   // white body (masthead-style), not on a navy band.
   let logo-block = if logo != none {
@@ -512,7 +523,9 @@
       line(length: 100%, stroke: 0.5pt + hairline)
       v(2pt)
       grid(columns: (1fr, 1fr), align: horizon,
-        image("logo-mark.svg", height: 9pt),
+        // Suppressed in `bare` mode so a no-assets build does not hard-fail
+        // here on page 2+ (the cover is not the only place a logo loads).
+        if bare { text(weight: 700)[U-tad] } else { image("logo-mark.svg", height: 9pt) },
         align(right)[#context counter(page).display()],
       )
     },

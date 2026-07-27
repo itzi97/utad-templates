@@ -42,6 +42,17 @@
 // can show a subtle section tag by its title.
 #let _utad-section = state("utad-section", none)
 
+// Whether the deck uses the (trademarked, non-MIT) logo image assets. Typst
+// has no file-existence check (see utad.typ), so a deck built without the
+// logo SVGs -- a fresh clone, or a fork that stripped the U-tad marks --
+// would hard-fail at the first image(). Every content slide's footer loads
+// logo-mark.svg, so a single per-slide guard is not enough; this deck-wide
+// state lets one call suppress every logo image. `title-slide` sets it
+// automatically when given logo-variant "none"/"text"; a deck with no title
+// slide can call `no-logo-slides()` once at the top instead.
+#let _slide-logos = state("utad-slide-logos", true)
+#let no-logo-slides() = _slide-logos.update(false)
+
 // A big hero number + caption, tightly spaced (the number's line box is
 // trimmed to the glyph so the caption sits close). For a stat/headline slide.
 #let stat(number, caption) = {
@@ -66,7 +77,12 @@
   event: none,
   logo-variant: "full",
 ) = {
-  let logo = if logo-variant == "mark" { image("logo-mark.svg", height: 1cm) }
+  // "none"/"text" -> a text wordmark and no image, and suppress the mark in
+  // every following content-slide footer too (see _slide-logos).
+  let bare = logo-variant == "none" or logo-variant == "text"
+  if bare { _slide-logos.update(false) }
+  let logo = if bare { text(fill: utad-navy, weight: 700, size: 34pt)[U-tad] }
+    else if logo-variant == "mark" { image("logo-mark.svg", height: 1cm) }
     else if logo-variant == "wordmark" { image("logo-wordmark.svg", width: 3.2cm) }
     else { image("logo-full.svg", width: 6cm) }
   page(
@@ -147,7 +163,10 @@
   footer: {
     set text(size: 13pt, fill: muted)
     grid(columns: (1fr, 1fr), align: (left + horizon, right + horizon),
-      image("logo-mark.svg", height: 16pt),
+      // image() is only constructed in the true branch, so a bare deck never
+      // evaluates it (evaluating image() on a missing file errors even if the
+      // result is discarded).
+      context if _slide-logos.get() { image("logo-mark.svg", height: 16pt) } else { text(weight: 700)[U-tad] },
       context [#counter(page).display()])
   },
   // Capture the real page-body height so the grid's 1fr row (and the fit /

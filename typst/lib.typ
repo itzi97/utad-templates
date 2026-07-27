@@ -7,4 +7,4 @@
 // evolution-chain now lives in utad.typ (above via *); report extras only.
 #import "utad-report.typ": weeklog, reference-list, timeline, orgchart, org-node
 #import "utad-assignment.typ": assignment, compact-info
-#import "utad-slides.typ": title-slide, section-slide, slide, focus-slide, slide-columns, agenda-slide, stat
+#import "utad-slides.typ": title-slide, section-slide, slide, focus-slide, slide-columns, agenda-slide, stat, no-logo-slides

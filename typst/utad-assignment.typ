@@ -79,6 +79,11 @@
     image("logo-full.svg", width: 4.6cm)
   } else { none }
 
+  // See utad.typ: Typst can't detect a missing file, so logo-variant "none"
+  // (or "text") is the single switch that avoids every logo image -- masthead
+  // AND footer -- so the assignment builds with no logo assets present.
+  let bare = logo-variant == "none" or logo-variant == "text"
+
   set document(
     title: to-plain-string(title),   // content -> string; see utad.typ
     author: author,
@@ -161,7 +166,7 @@
       line(length: 100%, stroke: 0.5pt + hairline)
       v(2pt)
       grid(columns: (1fr, 1fr), align: horizon,
-        image("logo-mark.svg", height: 9pt),
+        if bare { text(weight: 700)[U-tad] } else { image("logo-mark.svg", height: 9pt) },
         align(right)[#context counter(page).display()],
       )
     },
