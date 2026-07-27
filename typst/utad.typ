@@ -33,6 +33,26 @@
 #let sansfont = "Carlito"
 #let monofont = "DejaVu Sans Mono"
 
+// Flatten content to a plain string, for `set document(title: ...)` (PDF
+// metadata / viewer tab). Callers pass `title: [markup]`, which is content,
+// not a string -- the old `if type(title) == str` guard therefore always
+// fell through to a generic "U-tad document" fallback, so every report
+// showed the same wrong title in a viewer tab and file listing. This walks
+// the usual content shapes (text, sequences, wrapped bodies) and joins the
+// text runs. Observed: with `title: [Image Classification with CNNs]`, pypdf
+// read back "U-tad document" before and the real title after.
+#let to-plain-string(it) = {
+  if it == none { "" }
+  else if type(it) == str { it }
+  else if type(it) == content {
+    if it.has("text") { it.text }
+    else if it.has("children") { it.children.map(to-plain-string).join("") }
+    else if it.has("body") { to-plain-string(it.body) }
+    else if it.has("child") { to-plain-string(it.child) }
+    else { "" }
+  } else { str(it) }
+}
+
 // ---------- A text U-tad wordmark (fallback when no logo image) ----------
 #let utad-wordmark = align(center)[
   #box(fill: utad-navy, inset: (x: 11pt, y: 7pt), radius: 0pt,
@@ -219,7 +239,7 @@
     text(fill: utad-navy, weight: 700, size: 21pt)[U-tad]
   } else { none }
 
-  set document(title: if type(title) == str { title } else { "U-tad document" }, author: author)
+  set document(title: to-plain-string(title), author: author)
   set text(font: sansfont, size: 10.5pt, fill: ink, lang: lang)
   set par(justify: true, leading: 0.64em, spacing: 0.8em)
   show link: set text(fill: utad-blue)

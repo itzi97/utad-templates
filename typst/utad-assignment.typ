@@ -80,7 +80,7 @@
   } else { none }
 
   set document(
-    title: if type(title) == str { title } else { "U-tad assignment" },
+    title: to-plain-string(title),   // content -> string; see utad.typ
     author: author,
   )
   set text(font: sansfont, size: 10.5pt, fill: ink, lang: lang)

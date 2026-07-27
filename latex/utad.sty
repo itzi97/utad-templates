@@ -129,7 +129,9 @@
 \definecolor{utadcodebg}{HTML}{F4F6FA}
 
 \hypersetup{colorlinks=true, linkcolor=utadblue, urlcolor=utadblue,
-  citecolor=utadblue, linktoc=all}
+  citecolor=utadblue, linktoc=all, bookmarksnumbered=true}
+% bookmarksnumbered=true so the PDF sidebar bookmarks carry the same
+% "1", "2.1", ... numbers as the numbered contents, instead of bare titles.
 % linktoc=all makes the contents entries (text AND page number) real links.
 % Body cross-references keep linkcolor=utadblue (blue is the template's accent
 % for links). The TOC is the one place that must NOT take linkcolor, because
@@ -378,6 +380,22 @@
 \newcommand{\utadYear}{Year}
 \newcommand{\utadTeacher}{Teacher Name}
 \newcommand{\utadDate}{Date}
+
+% PDF document properties (viewer tab, file listing, "Document Properties").
+% Deferred with \AtBeginDocument because the author sets \utadTitle etc.
+% (and \setutadauthor) in their preamble AFTER \usepackage{utad} loads this
+% file -- reading them here at load time would capture only the defaults.
+% Wiring the same three fields the cover already shows means metadata and
+% cover can never silently disagree. Observed: without this the report opened
+% as "example.pdf" with an empty Author; with it, pypdf reads the real title
+% and author back.
+\AtBeginDocument{%
+  \hypersetup{%
+    pdftitle={\utadTitle},%
+    pdfauthor={\utadAuthorName},%
+    pdfsubject={\utadSubject},%
+  }%
+}
 % Full lockup on the cover: mark + "U-tad" + "University of Technology,
 % Arts & Design" tagline (logo-full.pdf). Wider than the bare wordmark, so
 % the width is larger to keep the mark a comparable size.
