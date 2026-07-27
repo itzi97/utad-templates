@@ -85,6 +85,7 @@
   )
   set text(font: sansfont, size: 10.5pt, fill: ink, lang: lang)
   set par(justify: true, leading: 0.64em, spacing: 0.8em)
+  set list(marker: utad-list-markers)   // squared, on-identity (see utad.typ)
   show link: set text(fill: utad-blue)
   set heading(numbering: "1.1")
 

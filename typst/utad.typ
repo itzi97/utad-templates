@@ -53,6 +53,19 @@
   } else { str(it) }
 }
 
+// Squared, on-identity list markers -- the parity match to the LaTeX
+// \setlist squares. Typst's default nested markers are •, then a dash (‣/-)
+// at deeper levels, which is the same off-identity dash the LaTeX side had.
+// Small filled squares instead: navy (dominant) at level 1, the blue accent
+// at level 2, grey at level 3. Fed to `set list(marker: ...)` in each
+// template's setup (utad-doc and assignment).
+#let utad-sqmark(c, s) = box(baseline: 0.02em, square(size: s, fill: c, stroke: none))
+#let utad-list-markers = (
+  utad-sqmark(utad-navy, 0.30em),
+  utad-sqmark(utad-blue, 0.26em),
+  utad-sqmark(muted, 0.24em),
+)
+
 // ---------- A text U-tad wordmark (fallback when no logo image) ----------
 #let utad-wordmark = align(center)[
   #box(fill: utad-navy, inset: (x: 11pt, y: 7pt), radius: 0pt,
@@ -242,6 +255,7 @@
   set document(title: to-plain-string(title), author: author)
   set text(font: sansfont, size: 10.5pt, fill: ink, lang: lang)
   set par(justify: true, leading: 0.64em, spacing: 0.8em)
+  set list(marker: utad-list-markers)   // squared, on-identity (see utad.typ)
   show link: set text(fill: utad-blue)
   set heading(numbering: "1.1")
 

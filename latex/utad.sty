@@ -128,6 +128,23 @@
 \definecolor{utadcodestring}{HTML}{1B7A4B}
 \definecolor{utadcodebg}{HTML}{F4F6FA}
 
+% ============================================================
+%  List markers -- squared, on-identity
+% ============================================================
+% LaTeX's default second-level itemize marker is an en dash (--), which is
+% both off-identity (this template squares its corners and reserves dashes
+% for nothing) and a silent way to reintroduce a dash glyph into a document
+% whose author is deliberately avoiding them. Set all three levels to small
+% filled squares (via \rule, so they inherit no font-dependent metrics):
+% navy at level 1 (the dominant colour), the blue accent at level 2 (deeper
+% = the small accent, consistent with "blue only as an accent"), and grey at
+% level 3. \labelsep is left at the class default; the squares are narrower
+% than a bullet so alignment is unchanged. Sizes shrink slightly per level.
+\newcommand{\utad@sqmark}[2]{\textcolor{#1}{\rule[0.12em]{#2}{#2}}}
+\setlist[itemize,1]{label=\utad@sqmark{utaddark}{0.38em}}
+\setlist[itemize,2]{label=\utad@sqmark{utadblue}{0.32em}}
+\setlist[itemize,3]{label=\utad@sqmark{utadgrey}{0.28em}}
+
 \hypersetup{colorlinks=true, linkcolor=utadblue, urlcolor=utadblue,
   citecolor=utadblue, linktoc=all, bookmarksnumbered=true}
 % bookmarksnumbered=true so the PDF sidebar bookmarks carry the same
