@@ -372,6 +372,18 @@
     set text(fill: utad-navy, size: 12pt, weight: 700, font: headingfont)
     hnum(it); it.body
   })
+  // Fourth level (====): the parity match to the LaTeX \subsubsection. One
+  // step down again (11pt), navy Poppins bold, led by a small blue square
+  // (the list-marker accent) instead of a number -- so it reads as a
+  // lightweight "named phase" for breaking up a long run. No hnum(): the
+  // outline is capped at depth 3 (above), so like the LaTeX 4th level this
+  // stays out of the contents and carries no number.
+  show heading.where(level: 4): it => block(above: 11pt, below: 4pt, sticky: true, {
+    set text(fill: utad-navy, size: 11pt, weight: 700, font: headingfont)
+    box(baseline: 0.02em, square(size: 0.30em, fill: utad-blue, stroke: none))
+    h(0.5em)
+    it.body
+  })
 
   // --- Code ---
   // Block code carries line numbers down the left in a small grey gutter

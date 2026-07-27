@@ -187,6 +187,22 @@
   {\headingfont\Large\bfseries\color{utaddark}}{\textcolor{utadblue}{\thesection}}{10pt}{}
 \titleformat{\subsection}
   {\headingfont\large\bfseries\color{utaddark}}{\textcolor{utadblue}{\thesubsection}}{8pt}{}
+% Fourth level. Previously unstyled -- \subsubsection fell back to the plain
+% report-class look (Computer Modern, black, no accent), which read as if it
+% came from a different document inside an otherwise-branded report. Styled
+% to continue the family: Poppins bold navy, one step down in size
+% (\normalsize, below \subsection's \large). Because report's default
+% secnumdepth is 2, \subsubsection is UNNUMBERED and absent from the TOC out
+% of the box -- which makes it exactly the lightweight "named phase" heading
+% wanted for breaking up a long run (no TOC clutter, no number). A small
+% blue square (the same accent as the list markers) leads the title so it
+% still reads as a heading at body size without a number in front of it.
+% Bump secnumdepth/tocdepth to 3 if you do want it numbered and in the TOC.
+\titleformat{\subsubsection}
+  {\headingfont\normalsize\bfseries\color{utaddark}}
+  {\textcolor{utadblue}{\thesubsubsection}}{6pt}
+  {\textcolor{utadblue}{\rule[0.06em]{0.30em}{0.30em}}\hspace{0.55em}}
+\titlespacing*{\subsubsection}{0pt}{11pt}{4pt}
 
 % ============================================================
 %  Page style -- ported from the Typst side's header/footer, which the
