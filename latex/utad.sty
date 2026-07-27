@@ -74,7 +74,14 @@
 \RequirePackage{amsmath}
 \RequirePackage{amssymb}
 \RequirePackage{tikz}
-\usetikzlibrary{positioning, arrows.meta, trees}
+% calc is needed by \utad@chainrender's ($(node)+(\utadchaingap,0)$)
+% coordinate arithmetic. It currently loads transitively (pgfgantt below
+% pulls it in), so the chain compiles today -- but that is luck, not a
+% declared dependency: reorder or drop pgfgantt and the chain would fail
+% with an obscure "no shape named" error. Declare it explicitly here so the
+% chain owns its own dependency. Observed: minimal utadchain-only document
+% compiles either way today; made explicit so it stays that way.
+\usetikzlibrary{positioning, arrows.meta, trees, calc}
 \RequirePackage{pgfgantt}
 \RequirePackage[most]{tcolorbox}
 \RequirePackage{etoolbox}
