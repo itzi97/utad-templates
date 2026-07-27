@@ -122,7 +122,16 @@
 \definecolor{utadcodebg}{HTML}{F4F6FA}
 
 \hypersetup{colorlinks=true, linkcolor=utadblue, urlcolor=utadblue,
-  citecolor=utadblue, linktoc=none}
+  citecolor=utadblue, linktoc=all}
+% linktoc=all makes the contents entries (text AND page number) real links.
+% Body cross-references keep linkcolor=utadblue (blue is the template's accent
+% for links). The TOC is the one place that must NOT take linkcolor, because
+% tocloft colours each entry itself (blue number / navy chapter / grey
+% section) and colorlinks would repaint all of it uniformly -- so \utadcontents
+% locally sets linkcolor=. (the hyperref special value "leave text colour as
+% is") for the duration of \tableofcontents only. Observed: this took the
+% contents pages from 0 /Link annotations to one per entry with the tocloft
+% palette intact; verified by counting annotations with pypdf, not by eye.
 
 % ============================================================
 %  Headings -- number in blue (occasional accent), title text in
@@ -183,9 +192,11 @@
 
 % ============================================================
 %  Table of contents -- same blue-number/dark-title split as headings,
-%  section entries in grey. NOTE: requires linktoc=none (set above) --
-%  hyperref's colorlinks will otherwise force every TOC entry to
-%  linkcolor and silently override all of this.
+%  section entries in grey. This works with linktoc=all because
+%  \utadcontents scopes linkcolor=. around \tableofcontents (see above and
+%  the \utadcontents definition) -- without that scoping, hyperref's
+%  colorlinks would force every TOC entry to linkcolor and silently override
+%  all of this.
 % ============================================================
 \renewcommand{\cftchapfont}{\headingfont\bfseries\color{utaddark}}
 \renewcommand{\cftchappresnum}{\color{utadblue}}
@@ -248,6 +259,11 @@
   \clearpage
   \begingroup
     \pagestyle{empty}%
+    % linkcolor=. (scoped to this group) = "leave the text in whatever colour
+    % it already has", so the TOC links inherit tocloft's per-entry palette
+    % instead of being repainted to linkcolor by colorlinks. Reverts at
+    % \endgroup, so body cross-references keep the blue link accent.
+    \hypersetup{linkcolor=.}%
     \let\utad@saved@thispagestyle\thispagestyle
     \renewcommand{\thispagestyle}[1]{\utad@saved@thispagestyle{empty}}%
     \tableofcontents
