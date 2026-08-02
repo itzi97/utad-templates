@@ -8,6 +8,17 @@ project aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **ER-diagram fragment** (LaTeX): `utaderd` environment with `\utadentity`
+  (title-bar entity box with a padded, monospaced attribute block) and
+  `\utadrelone` / `\utadrelmany` relationship macros drawing discreet
+  crow's-foot cardinality glyphs. Entities anchor by their top edge so
+  uneven attribute counts don't stagger the row. Extracted from the
+  internship report's billing-chain figure.
+- **Custom timeline column labels** (LaTeX): `utadtimeline` gained an
+  optional first argument for cosmetic column labels, e.g.
+  `\begin{utadtimeline}[1,2,3,6,7,8]{6}` to show only working days with
+  weekends skipped. Default behaviour (1..N) unchanged.
+
 - **PDF metadata** (both): documents now carry a real title/author. LaTeX
   wires `\utadTitle` / `\utadAuthorName` / `\utadSubject` into `pdftitle` /
   `pdfauthor` / `pdfsubject` (deferred to `\AtBeginDocument` so it reads the
@@ -57,6 +68,17 @@ project aims to follow [Semantic Versioning](https://semver.org/).
   example (Business Plan pitch).
 
 ### Changed
+
+- **`utadtimeline` reads denser** (LaTeX): rows tightened (0.55cm →
+  0.36cm), bar labels one size down (`\tiny`), and dependency-arrow elbows
+  calmed (`link bulge` 2 → 0.6, `link tolerance` 4 → 1 — the old values
+  made every arrow lunge far right and double back). Tuned on the
+  internship report's 10-row timeline.
+- **`utadorgchart` clears its fork bars** (LaTeX): default `level distance`
+  raised 1.45cm → 1.8cm and level-2 sibling distance 3.3cm → 3.9cm, so
+  two-line boxes no longer collide with the connector elbows; comments now
+  explain the equal-height-siblings rule and the per-node
+  `text width` fix for long labels.
 
 - **List markers** (both): the second-level itemize marker (LaTeX) and the
   deeper-level list markers (Typst) were the default en dash; they are now

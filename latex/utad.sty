@@ -779,18 +779,27 @@
 %    \ganttbar{Sales Schema (v1--v8)}{1}{15} \\
 %    \ganttmilestone{Stakeholder Demo}{14} \\
 %    \end{utadtimeline}
+%
+%  Custom column labels (e.g. working days only, weekends skipped) go in
+%  the optional argument; slots are still numbered 1..N internally, the
+%  labels are purely cosmetic:
+%    \begin{utadtimeline}[1,2,3,6,7,8,9,10,13]{9}
 % ============================================================
-\newenvironment{utadtimeline}[1]{%
+\newenvironment{utadtimeline}[2][]{%
   \begin{ganttchart}[
       vgrid={draw=utadgrey!15},
       canvas/.append style={draw=none},
       x unit=0.3cm,
-      y unit title=0.7cm,
-      y unit chart=0.55cm,
+      % Rows kept deliberately tight: labels one size down from the bars'
+      % surroundings and 0.38cm rows read better than the airy defaults
+      % once \resizebox scales the chart to \textwidth (learned from the
+      % internship report, where 0.55cm rows looked double-spaced).
+      y unit title=0.55cm,
+      y unit chart=0.36cm,
       title height=1,
-      bar height=0.5,
-      bar label font=\headingfont\footnotesize,
-      milestone label font=\headingfont\footnotesize,
+      bar height=0.62,
+      bar label font=\headingfont\tiny,
+      milestone label font=\headingfont\tiny,
       title label font=\tiny,
       title/.append style={draw=none, fill=white},
       bar/.append style={fill=utaddark, draw=utaddark},
@@ -799,12 +808,17 @@
       % Finish-to-start dependency arrows (\ganttlink{from}{to}, bars named
       % with `name=`): accent-blue elbow with a white casing drawn underneath
       % (preaction) so the link stays legible where it crosses a navy bar --
-      % the same treatment as the Typst timeline.
-      link bulge=2, link tolerance=4,
+      % the same treatment as the Typst timeline. Bulge/tolerance kept small:
+      % the old bulge=2 made every elbow lunge far right and double back.
+      link bulge=0.6, link tolerance=1,
       link/.style={-{Stealth[length=1.6mm, width=1.4mm]}, utadblue,
         line width=0.7pt, preaction={draw=white, line width=2.1pt}},
-  ]{1}{#1}
-  \gantttitlelist{1,...,#1}{1} \\
+  ]{1}{#2}
+  \if\relax\detokenize{#1}\relax
+    \gantttitlelist{1,...,#2}{1} \\
+  \else
+    \gantttitlelist{#1}{1} \\
+  \fi
 }{%
   \end{ganttchart}
 }
@@ -910,6 +924,15 @@
 % (and per-level overrides) if a wide row of children gets tight. For a
 % deep, very uneven tree the `forest` package gives tighter packing, but
 % the built-in `trees` layout below keeps the template dependency-free.
+%
+% Two lessons baked in from real use (the internship report's org chart):
+% 1. Keep sibling boxes the SAME HEIGHT. A label that wraps to one line
+%    more than its sibling grows the box upward past the fork bar, so the
+%    connector appears to enter from the side. Fix locally by widening
+%    that one node: `node[orgnode, text width=3.3cm]{Long Name}`.
+% 2. The default level distance is 1.8cm (raised from 1.45) so the fork
+%    bar clears two-line boxes with margin. Tree-wide overrides go right
+%    after the root node: `\node[orgroot]{X} [level distance=2cm] child...`
 \newlength{\utadorgboxw}
 \setlength{\utadorgboxw}{2.7cm}
 \newenvironment{utadorgchart}{%
@@ -920,15 +943,82 @@
       orgroot/.style={orgbox, fill=utaddark, text=white},
       orgnode/.style={orgbox, fill=utadlight, text=utaddark},
       orghi/.style={orgbox, draw=utadblue, fill=utadblue, text=white},
-      level distance=1.45cm,
+      level distance=1.8cm,
       edge from parent/.style={draw=utadgrey!55, line width=0.7pt,
         edge from parent fork down},
       level 1/.style={sibling distance=6.0cm},
-      level 2/.style={sibling distance=3.3cm},
+      level 2/.style={sibling distance=3.9cm},
       level 3/.style={sibling distance=3.3cm},
     ]
 }{%
   \end{tikzpicture}\end{center}\par\medskip
+}
+
+% ============================================================
+%  Entity-relationship fragment -- crow's-foot notation
+% ============================================================
+% A row of entity boxes (title bar + padded attribute block) joined by
+% relationship lines with discreet crow's-foot cardinality glyphs. Built
+% for the internship report's billing-chain figure; kept because every
+% database-flavoured deliverable wants one eventually.
+%
+% Entities are anchored by their top edge at y=0 so uneven attribute
+% counts do not stagger the row; relationship lines run at a fixed depth
+% (\utaderdliney, default -1.15cm -- set it before the environment if your
+% boxes are taller). Underline primary keys yourself (\underline{id}),
+% right-tag foreign keys with \hfill FK.
+%
+%   \begin{utaderd}
+%   \utadentity{a}{0}{customers}{\underline{id}\\ name}
+%   \utadentity{b}{6.4}{orders}{\underline{id}\\ customer\_id \hfill FK}
+%   \utadrelmany{a}{b}{places}
+%   \end{utaderd}
+%
+% \utadrelone{from}{to}{label}  draws ||--|| (one-and-only-one both ends);
+% \utadrelmany{from}{to}{label} draws ||--o< (one to many, foot at `to`).
+%
+% The environment is a bare tikzpicture, deliberately: wrap it in a figure,
+% \begin{center}, or \resizebox{\textwidth}{!}{...} yourself. (A built-in
+% center block would break inside \resizebox, which is how a three-entity
+% row usually needs to be used.)
+\newlength{\utadentityw}
+\setlength{\utadentityw}{4.6cm}
+\newcommand{\utaderdliney}{-1.15}
+\newenvironment{utaderd}{%
+  \begin{tikzpicture}[
+      erdbox/.style={rectangle, draw=utaddark, thick, inner sep=0pt},
+      erdrel/.style={utadblue, line width=1pt},
+      erdglyph/.style={utadblue, line width=0.6pt},
+      erdlbl/.style={font=\headingfont\scriptsize, text=utadgrey}
+    ]
+  \coordinate (utaderd@ly) at (0,\utaderdliney);
+}{%
+  \end{tikzpicture}%
+}
+\newcommand{\utadentity}[4]{%
+  \node[erdbox, anchor=north] (#1) at (#2,0) {\begin{minipage}{\utadentityw}
+    \colorbox{utaddark}{\parbox{\dimexpr\utadentityw-2\fboxsep}{\centering\rule{0pt}{11pt}{\headingfont\bfseries\footnotesize\color{white}#3}\vspace{2pt}}}\\[5pt]
+    \hspace*{8pt}\parbox{\dimexpr\utadentityw-18pt}{\ttfamily\scriptsize\renewcommand{\baselinestretch}{1.25}\selectfont #4}\\[6pt]
+    \mbox{}
+  \end{minipage}};
+}
+\newcommand{\utad@erdone}[1]{% two small ticks near an endpoint, sign #1
+  \draw[erdglyph] ([xshift=#13mm]\utad@erdanchor |- utaderd@ly) +(0,-0.9mm) -- +(0,0.9mm);
+  \draw[erdglyph] ([xshift=#14.4mm]\utad@erdanchor |- utaderd@ly) +(0,-0.9mm) -- +(0,0.9mm);
+}
+\newcommand{\utadrelone}[3]{%
+  \draw[erdrel] (#1.east |- utaderd@ly) -- (#2.west |- utaderd@ly)
+    node[erdlbl, midway, above=1pt]{#3};
+  \def\utad@erdanchor{#1.east}\utad@erdone{+}%
+  \def\utad@erdanchor{#2.west}\utad@erdone{-}%
+}
+\newcommand{\utadrelmany}[3]{%
+  \draw[erdrel] (#1.east |- utaderd@ly) -- (#2.west |- utaderd@ly)
+    node[erdlbl, midway, above=1pt]{#3};
+  \def\utad@erdanchor{#1.east}\utad@erdone{+}%
+  \draw[erdglyph] ([xshift=-3.2mm]#2.west |- utaderd@ly) -- ([yshift=1.4mm]#2.west |- utaderd@ly);
+  \draw[erdglyph] ([xshift=-3.2mm]#2.west |- utaderd@ly) -- (#2.west |- utaderd@ly);
+  \draw[erdglyph] ([xshift=-3.2mm]#2.west |- utaderd@ly) -- ([yshift=-1.4mm]#2.west |- utaderd@ly);
 }
 
 \endinput
