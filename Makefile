@@ -4,9 +4,10 @@
 #  Requires: typst, and xelatex (TeX Live / MiKTeX). The templates need the
 #  Poppins + Carlito fonts — run `make fonts` once first if you don't have them.
 #
-#    make            # build all example PDFs (Typst + LaTeX)
+#    make            # build all example PDFs (Typst + LaTeX + TFG)
 #    make typst       # Typst examples only
 #    make latex       # LaTeX example only
+#    make tfg         # TFG skeleton (pdflatex + biber; latexmk drives it)
 #    make check       # build + report pages / undefined refs / overfull boxes
 #    make fonts       # download + install Poppins & Carlito
 #    make clean       # remove LaTeX build artifacts
@@ -17,12 +18,12 @@
 #  threshold with `make check OVERFULL=5.0` (points; default 2.0).
 # ============================================================
 
-.PHONY: all typst latex check fonts clean
+.PHONY: all typst latex tfg check fonts clean
 
 # Overfull \hbox warnings smaller than this many points are ignored as noise.
 OVERFULL ?= 2.0
 
-all: typst latex
+all: typst latex tfg
 
 typst:
 	cd typst && typst compile example.typ
@@ -35,7 +36,18 @@ latex:
 	cd latex && xelatex -interaction=nonstopmode -halt-on-error example.tex
 	cd latex && xelatex -interaction=nonstopmode -halt-on-error example.tex
 
+tfg:
+	cd latex-tfg && latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
+
 check:
+	@echo "== TFG =="
+	@cd latex-tfg && latexmk -pdf -interaction=nonstopmode main.tex >/dev/null 2>&1; \
+	  printf '  main.pdf: %s pages (template: 14)\n' "$$(pdfinfo main.pdf 2>/dev/null | awk '/^Pages:/{print $$2}')"; \
+	  u=$$(grep -Ec 'Reference .* undefined|Citation .* undefined|There were undefined references' main.log); \
+	  printf '  undefined references: %s\n' "$$u"; \
+	  grep -E 'Overfull \\hbox' main.log \
+	    | sed -E 's/.*Overfull \\hbox \(([0-9.]+)pt too wide\).*/\1/' \
+	    | awk -v t=$(OVERFULL) '$$1+0 > t {n++} END {printf "  overfull hboxes > %spt: %d\n", t, n+0}'
 	@echo "== LaTeX =="
 	@cd latex && xelatex -interaction=nonstopmode example.tex >/dev/null 2>&1; \
 	  xelatex -interaction=nonstopmode example.tex > _check.log 2>&1; \
@@ -59,3 +71,4 @@ fonts:
 
 clean:
 	find latex -type f \( -name '*.aux' -o -name '*.log' -o -name '*.out' -o -name '*.toc' \) -delete
+	cd latex-tfg && latexmk -C main.tex >/dev/null 2>&1; cd test-thesis && latexmk -C -jobname=thesis-en thesis.tex >/dev/null 2>&1; latexmk -C -jobname=thesis-es thesis.tex >/dev/null 2>&1

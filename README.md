@@ -17,11 +17,15 @@ Three templates are included:
 | **Compact assignment** | Typst | Short deliverables (~2–5 pages) — masthead, no cover/contents page. |
 | **Solution set** | Typst | Problem sets where you restate the question and box it above your answer. |
 | **Slides** | Typst | 16:9 presentation deck — brand-matched title, section, and content slides. |
+| **TFG / BFP** | LaTeX | The End-of-Degree Project, a port of the official Word template (`Template - inso.docx`): Times 12 pt, plain black, the two cover logos, APA bibliography. Not the house identity above — it is the template you are graded against. |
 
 See `latex/example.pdf` and `typst/example.pdf` (full reports),
 `typst/assignment.pdf` (problem set), `typst/spark-solution.pdf`
 (question/solution style), and `typst/slides.pdf` (presentation deck) for
-what they produce.
+what they produce. The TFG class is its own thing in
+[`latex-tfg/`](latex-tfg/) — see `latex-tfg/main.pdf` and its
+[README](latex-tfg/README.md), which records how it was measured against
+the Word original.
 
 ## New here? Fastest path (Typst)
 
@@ -156,6 +160,22 @@ Your answer.
 
 Compile with `typst compile deck.typ` (or `typst watch` for live preview).
 
+### TFG (after install)
+
+```sh
+./install.sh tfg                       # utad-tfg.cls + its logos into your texmf tree
+cp latex-tfg/main.tex latex-tfg/refs.bib my-tfg/    # the skeleton mirrors the Word template page for page
+cd my-tfg && latexmk -pdf main.tex     # pdflatex + biber; no fonts to install
+```
+
+`\documentclass[spanish]{utad-tfg}` switches every generated name (Índice,
+Índice de imágenes, Figura, Tabla, Fuente…); `[tnr]` uses the real Times New
+Roman under `latexmk -xelatex` if you have it installed (the default newtx
+build differs from Word by one line break in the whole template).
+Needs `biber` and `biblatex-apa` — on Fedora `texlive-biber
+texlive-biblatex-apa texlive-newtx`, on Debian/Ubuntu `biber
+texlive-bibtex-extra texlive-fonts-extra`.
+
 ### LaTeX report (after install)
 
 ```latex
@@ -206,6 +226,14 @@ utad-templates/
 │   ├── starter.tex              copy-to-start skeleton
 │   ├── example.tex / .pdf       full worked report
 │   └── logo-*.pdf               logo assets (PDF, for LaTeX)
+├── latex-tfg/
+│   ├── utad-tfg.cls             the TFG class (port of the official Word template)
+│   ├── main.tex / .pdf          copy-to-start skeleton = the template, page for page
+│   ├── refs.bib                 demo bibliography (biblatex-apa)
+│   ├── README.md                every measured value and every known difference
+│   ├── logo-utad.png, logo-ucjc.png   the cover logos, cropped as in the .docx
+│   ├── tools/                   the line-position diff used to verify the port
+│   └── test-thesis/             67-page filler stress test; `./build.sh` builds it in both languages
 └── typst/
     ├── typst.toml, lib.typ      package manifest + entrypoint (for @local install)
     ├── utad.typ                 base module (cover, headings, callouts, tables)
@@ -266,10 +294,13 @@ always fonts or the compiler.
 ## Logo & trademark
 
 The **U-tad** name and logo are trademarks of U-tad (Centro Universitario de
-Tecnología y Arte Digital). The logo files in `latex/` and `typst/`
-(`logo-*.pdf`, `logo-*.svg`) are the university's property and are bundled here
-only so U-tad students can typeset their own coursework. **They are not covered
-by the MIT license** below — the license applies to the template *code* only.
+Tecnología y Arte Digital). The logo files in `latex/`, `typst/` and
+`latex-tfg/` (`logo-*.pdf`, `logo-*.svg`, `logo-*.png`) are the university's
+property and are bundled here only so U-tad students can typeset their own
+coursework; `latex-tfg/logo-ucjc.png` is the "Centro adscrito a Universidad
+Camilo José Cela" lockup and belongs to UCJC, taken from the TFG template
+U-tad distributes to its students. **None of them are covered by the MIT
+license** below — the license applies to the template *code* only.
 
 If you fork or adapt this project for anything that isn't U-tad coursework,
 replace the logo files with your own institution's marks. The templates read

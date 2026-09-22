@@ -10,6 +10,11 @@
 *.synctex.gz
 *.bbl
 *.blg
+*.bcf
+*.run.xml
+*.xdv
+# the TFG stress-test PDFs are rebuilt by CI, not tracked
+latex-tfg/test-thesis/*.pdf
 
 # Typst / editor
 *.pdf.tmp
