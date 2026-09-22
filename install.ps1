@@ -5,6 +5,7 @@
 #     .\install.ps1            # install both Typst and LaTeX
 #     .\install.ps1 typst      # Typst only
 #     .\install.ps1 latex      # LaTeX only
+#     .\install.ps1 tfg        # the TFG class only (utad-tfg.cls)
 #
 #  Typst  -> local package:   #import "@local/utad:0.1.0": *
 #  LaTeX  -> user texmf tree:  \usepackage{utad}  (xelatex / lualatex)
@@ -57,9 +58,29 @@ function Install-Latex {
   Ok 'use it with:  \usepackage{utad}   (compile with xelatex or lualatex)'
 }
 
+function Install-Tfg {
+  Info "Installing the TFG class (utad-tfg)…"
+  if (-not (Get-Command kpsewhich -ErrorAction SilentlyContinue)) {
+    Fail "no TeX installation found (kpsewhich missing). Install TeX Live or MiKTeX first."
+    return
+  }
+  $texmf = (& kpsewhich -var-value TEXMFHOME).Trim()
+  if ([string]::IsNullOrWhiteSpace($texmf)) { $texmf = Join-Path $env:USERPROFILE "texmf" }
+  $dest = Join-Path $texmf "tex\latex\utad-tfg"
+  New-Item -ItemType Directory -Force -Path $dest | Out-Null
+  foreach ($f in @("utad-tfg.cls","logo-utad.png","logo-ucjc.png")) {
+    Copy-Item (Join-Path $ScriptDir "latex-tfg\$f") $dest -Force
+  }
+  if (Get-Command mktexlsr -ErrorAction SilentlyContinue) { & mktexlsr $texmf | Out-Null }
+  elseif (Get-Command initexmf -ErrorAction SilentlyContinue) { & initexmf --update-fndb | Out-Null }
+  Ok "installed to $dest"
+  Ok 'use it with:  \documentclass{utad-tfg}   (latexmk -pdf; needs biber + biblatex-apa)'
+}
+
 switch ($Target.ToLower()) {
   "typst" { Install-Typst }
   "latex" { Install-Latex }
-  "all"   { Install-Typst; Write-Host ""; Install-Latex }
-  default { Fail "unknown target '$Target' (use: typst | latex | all)" }
+  "tfg"   { Install-Tfg }
+  "all"   { Install-Typst; Write-Host ""; Install-Latex; Write-Host ""; Install-Tfg }
+  default { Fail "unknown target '$Target' (use: typst | latex | tfg | all)" }
 }

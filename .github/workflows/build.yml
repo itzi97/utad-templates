@@ -88,3 +88,40 @@ jobs:
         with:
           name: latex-pdfs
           path: latex/*.pdf
+
+  tfg:
+    name: TFG class (skeleton + stress test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install TeX Live (pdfLaTeX + biber + the packages the class needs)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            texlive-latex-recommended texlive-latex-extra texlive-bibtex-extra \
+            texlive-fonts-extra texlive-lang-spanish texlive-plain-generic \
+            biber latexmk poppler-utils python3-pip
+          pip3 install --break-system-packages pdfplumber
+
+      - name: Compile the TFG skeleton (pdflatex + biber, via latexmk)
+        working-directory: latex-tfg
+        run: |
+          set -e
+          latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
+          test "$(pdfinfo main.pdf | awk '/^Pages:/{print $2}')" = 14 \
+            || { echo "::error::main.pdf is not 14 pages like the Word template"; exit 1; }
+          ! grep -q 'Overfull \\hbox' main.log || { echo "::error::overfull box in main.tex"; exit 1; }
+
+      - name: Build the stress test in both languages and run its checks
+        working-directory: latex-tfg/test-thesis
+        run: ./build.sh
+
+      - name: Upload TFG PDFs
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfg-pdfs
+          path: |
+            latex-tfg/main.pdf
+            latex-tfg/test-thesis/thesis-en.pdf
+            latex-tfg/test-thesis/thesis-es.pdf

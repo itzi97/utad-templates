@@ -6,11 +6,14 @@
 #     ./install.sh            # install both Typst and LaTeX
 #     ./install.sh typst      # Typst only
 #     ./install.sh latex      # LaTeX only
+#     ./install.sh tfg        # the TFG class only (utad-tfg.cls)
 #
 #  Typst  -> installs a local package so you can
 #              #import "@local/utad:0.1.0": *
 #  LaTeX  -> installs into your home texmf tree so you can
 #              \usepackage{utad}   (compile with xelatex or lualatex)
+#  TFG    -> installs utad-tfg.cls + its two logos so you can
+#              \documentclass{utad-tfg}   (pdflatex + biber; xelatex with [tnr])
 # ============================================================
 set -uo pipefail
 
@@ -66,11 +69,34 @@ install_latex() {
   ok 'use it with:  \usepackage{utad}   (compile with xelatex or lualatex)'
 }
 
+install_tfg() {
+  info "Installing the TFG class (utad-tfg)…"
+  if ! command -v kpsewhich >/dev/null 2>&1; then
+    fail "no TeX installation found (kpsewhich missing). Install TeX Live or MiKTeX first."
+    return 1
+  fi
+  texmf="$(kpsewhich -var-value TEXMFHOME)"
+  texmf="${texmf%%:*}"
+  [ -n "$texmf" ] || texmf="$HOME/texmf"
+  dest="$texmf/tex/latex/utad-tfg"
+  mkdir -p "$dest" || { fail "could not create $dest"; return 1; }
+  cp "$SCRIPT_DIR"/latex-tfg/utad-tfg.cls "$SCRIPT_DIR"/latex-tfg/logo-utad.png \
+     "$SCRIPT_DIR"/latex-tfg/logo-ucjc.png "$dest"/ || { fail "copy failed"; return 1; }
+  if command -v mktexlsr >/dev/null 2>&1; then
+    mktexlsr "$texmf" >/dev/null 2>&1 || true
+  elif command -v texhash >/dev/null 2>&1; then
+    texhash "$texmf" >/dev/null 2>&1 || true
+  fi
+  ok "installed to $dest"
+  ok 'use it with:  \documentclass{utad-tfg}   (latexmk -pdf; needs biber + biblatex-apa)'
+}
+
 case "$TARGET" in
   typst) install_typst ;;
   latex) install_latex ;;
-  all)   install_typst; echo; install_latex ;;
+  tfg)   install_tfg ;;
+  all)   install_typst; echo; install_latex; echo; install_tfg ;;
   -h|--help|help)
     sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//' ; exit 0 ;;
-  *) fail "unknown target '$TARGET' (use: typst | latex | all)"; exit 1 ;;
+  *) fail "unknown target '$TARGET' (use: typst | latex | tfg | all)"; exit 1 ;;
 esac

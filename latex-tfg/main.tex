@@ -1,0 +1,225 @@
+%% main.tex -- skeleton for utad-tfg.cls
+%%
+%% This mirrors "Template - inso.docx" page for page, so you can open the
+%% two side by side and check. Replace the guidance text as you write; the
+%% structure is the part to keep.
+%%
+%% Build:  latexmk -pdf main.tex
+%%         (pdflatex, biber, pdflatex, pdflatex -- latexmk handles it)
+%%
+%% [spanish] switches Index / Image index / Glossary / Appendix / Keywords
+%% to their Spanish names. [tnr] uses real Times New Roman (XeLaTeX only).
+
+\documentclass[english]{utad-tfg}
+
+\usepackage[style=apa,backend=biber]{biblatex}
+\addbibresource{refs.bib}
+% Let biblatex break a URL between letters, not only at punctuation; a
+% long path segment otherwise runs into the margin.
+\setcounter{biburlnumpenalty}{9000}
+\setcounter{biburlucpenalty}{9000}
+\setcounter{biburllcpenalty}{9000}
+
+% ---- Cover ---------------------------------------------------------
+\tfgtitle{Title}
+\tfgmodality{conventional or linked to projects}
+\tfgdegree{DEGREE AND SPECIALIZATION}
+\tfgcall{DATE OF SUBMISSION (ORDINARY OR EXTRAORDINARY AND ACADEMIC YEAR)}
+\tfgstudent{NAME AND SURNAME}
+\tfgtutor{NAME AND SURNAME}
+\tfgcotutor{NAME AND SURNAME}   % leave empty and the line disappears
+
+\begin{document}
+
+\tfgcover
+
+% ---- p2: Acknowledgements ------------------------------------------
+\begin{tfgacknowledgements}
+(optional)
+\end{tfgacknowledgements}
+
+% ---- p3: style note, then the Index ---------------------------------
+\textit{Each kind of heading in this template has a style attached to it
+(title 1 to 5, plus one for long quotations). In LaTeX you get that for
+free: use \texttt{\textbackslash chapter}, \texttt{\textbackslash section},
+\texttt{\textbackslash subsection} and so on, and the index below rebuilds
+itself on every compile -- there is nothing to refresh by hand.}
+
+% The template follows its note with a second paragraph holding a support
+% URL; this one keeps a second paragraph so the index still runs onto the
+% next page at the same entry.
+\url{https://www.overleaf.com/learn/latex/Table_of_contents}
+
+\tfgindex
+
+% ---- p5: Abstract and Resumen ---------------------------------------
+% \tfgabstract is the summary in the document's language and comes first;
+% \tfgaltabstract is the other one. With [spanish] the headings swap to
+% Resumen / Abstract, so swap the two texts as well.
+\begin{tfgabstractpage}
+\tfgabstract{%
+  Brief summary of the BFP in English. It is recommended to describe in a
+  few words the topic, your research and the conclusions you have reached.%
+}{four or five keywords}
+
+\tfgaltabstract{%
+  Breve resumen del TFG en espa\~nol. Se recomienda describir en pocas
+  palabras la tem\'atica, el trabajo desarrollado y las conclusiones.%
+}{cuatro o cinco palabras clave}
+\end{tfgabstractpage}
+
+% =====================================================================
+\chapter{Introduction}
+
+\section{Justification and context}
+This section must explain the sense of this BFP within a specific field of
+study (animation, game studies, computer graphics, renewable energy\ldots)
+and what it aims to contribute. The discourse should make it clear why this
+topic is relevant.
+
+\section{Motivation}
+This is the only place of the BFP where you can write in the first person.
+Here you explain the personal reasons that led the author to write this BFP.
+
+\section{Problem statement}
+Here you must explain which is the problem or problems that your BFP is
+going to address. You can use as many subtitles as necessary.
+
+\section{Objectives}
+They are usually divided into general objectives (the main focus of your
+paper) and other specific objectives, complementary to the general one.
+
+% =====================================================================
+\chapter{State of the art}
+
+In a BFP the author joins a conversation which has already started, and it
+only makes sense to join a conversation if we keep up to date with
+everything that has been already discussed or made. This section provides
+that update -- what others have achieved before the author arrived and
+which are the essential concepts for understanding the field. It is crucial
+and is based on careful research.
+
+\section{First chapter of your state of the art [Ex.: Psychology of terror,
+Electromagnetic waves, etc.]}
+The state of the art must be structured from the most general information
+to the most specific.
+
+You can devote as many titles and subtitles as you need. Remember to use the heading commands provided by this class.
+
+% =====================================================================
+\chapter{Methodology}
+
+\begin{figure}[H]
+  \centering
+  % The template's own figures are 14.99 x 12.70 cm -- full text width.
+  % Matching that is what makes the two figures fall on separate pages
+  % here exactly as they do in the .docx. The frame's padding and rule are
+  % taken off both dimensions so the box is the picture's exact size.
+  \fbox{\parbox[c][\dimexpr12.7cm-2\fboxsep-2\fboxrule][c]{\dimexpr\textwidth-2\fboxsep-2\fboxrule}{\centering\itshape
+    figure placeholder -- replace with \texttt{\textbackslash includegraphics}}}
+  \caption{}
+  \label{fig:one}
+\end{figure}
+
+This chapter explains how the knowledge presented in the state of the art
+will be reflected in the development. If the development involves a
+product, then you should explain why some particular features were chosen
+instead of others, which were the criteria that determined that choice.
+
+\begin{figure}[H]
+  \centering
+  \fbox{\parbox[c][\dimexpr12.7cm-2\fboxsep-2\fboxrule][c]{\dimexpr\textwidth-2\fboxsep-2\fboxrule}{\centering\itshape
+    figure placeholder -- replace with \texttt{\textbackslash includegraphics}}}
+  \caption{A caption for the second figure. \source{Author (2026)}}
+  \label{fig:two}
+\end{figure}
+
+You can add as many titles as you need.
+
+% The template skips 3.1 and labels this section 3.2 -- an off-by-one in
+% the original that its own index repeats. Reproduced here so the two
+% documents line up; delete this line to number it 3.1.
+\setcounter{section}{1}
+\section{Employed technologies}
+
+% =====================================================================
+\chapter{Development}
+
+This chapter is intended for students to conduct their own exploration,
+relating it to the state of the art described above.
+
+Here you can describe the different phases of the work, relating them to
+the topics covered in the state of the art (``this has been worked on in
+this way, differently or similarly to what the theory says / other
+practical works analysed in the theoretical framework have done'').
+
+These are only examples. You can find many different types of BFP
+development.
+
+You can add as many titles as you need.
+
+\section{}
+
+% =====================================================================
+\chapter{Conclusions}
+
+This section can be read independently of the rest of the document. It
+should summarise the main topics of your research. The order in which the
+ideas are presented may differ slightly from that of the document, and may
+be organised according to different criteria.
+
+Please note that new information should never appear in the conclusions
+(this is the purpose of the development section), and that the tone of the
+writing must be academic -- it should not be included whether the work was
+important or not personally for the student. As in the rest of the BFP
+(excepting the motivation), the first-person singular must not be used.
+
+\section{Discussion}
+This section mentions what could not be covered during the development of
+the BFP. This may include any problems that arose during the realization of
+the BFP: someone did not respond to an interview request, a technical
+problem occurred that prevented the completion of a certain section of the
+BFP, etc.
+
+\section{Further research}
+This section presents further research lines of this BFP in the future.
+
+It should include whether the present work can be replicated for other
+examples, or to what directions it can be extended in the future.
+
+% =====================================================================
+\chapter{References}
+
+\section{Bibliography}
+It is presented in alphabetical order in APA format. Here it is generated
+from \texttt{refs.bib} by \texttt{biblatex}, so the ordering and the
+formatting are not yours to maintain \parencite{hevner2004,peffers2007,%
+wieringa2014,kimball2013,loshin2008}.
+
+\printbibliography[heading=none]
+
+\section{Image index}
+\tfgimageindex
+
+% =====================================================================
+\begin{tfgglossary}
+The BFP is a document intended for someone who is not an expert in the
+subject. Therefore, here can be listed all the specific vocabulary that may
+be unfamiliar to someone outside the field of expertise (rig, game loop,
+neural network) but that would hinder the discourse of the state of the art.
+
+It should be listed in alphabetical order and you do not need to cite
+references.
+
+There may be BFP where this section is not necessary.
+\end{tfgglossary}
+
+\begin{tfgappendix}
+Include here all cited material that takes up too much space to be included
+in the body of the text: any graph, sketch, statistic, line of code,
+reference text, survey, interview, or technical note that is not directly
+related to the development and conclusions of the BFP but that you wish to
+add as reference material.
+\end{tfgappendix}
+
+\end{document}

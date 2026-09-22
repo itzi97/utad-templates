@@ -8,6 +8,21 @@ project aims to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **TFG class** (`latex-tfg/utad-tfg.cls`, v0.3.2): a LaTeX port of the
+  official End-of-Degree Project Word template (`Template - inso.docx`,
+  2609_INSG4_TFGR_A). Separate from `utad.sty` on purpose — the TFG is
+  marked against the template, so this is Times 12 pt, black, the two
+  cover logos and nothing else. Every value was read out of the .docx XML
+  and the output diffed line by line against a render of the Word file:
+  mean 1.4 pt over the eight identical-content pages (1.0 pt with the real
+  Times New Roman via `[tnr]`), 14 pages for 14. `main.tex` is the
+  template page for page; `[spanish]` switches every generated name.
+  Comes with the measuring tools (`tools/`), a 67-page filler stress test
+  (`test-thesis/`, both languages, 0 overfull boxes), a `make tfg` target,
+  an `install.sh tfg` / `install.ps1 tfg` target and a CI job. Checked
+  against a PDF exported by Word for the web as well: 1.5 pt mean, and
+  Word's render agrees with LibreOffice's to 0.4 pt.
+
 - **ER-diagram fragment** (LaTeX): `utaderd` environment with `\utadentity`
   (title-bar entity box with a padded, monospaced attribute block) and
   `\utadrelone` / `\utadrelmany` relationship macros drawing discreet
